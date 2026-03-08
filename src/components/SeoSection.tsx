@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom';
 import type { ToolConfig } from '@/lib/tools-registry';
+import { useCaseLabels } from '@/lib/tools-registry';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface SeoSectionProps {
@@ -12,6 +14,9 @@ export function SeoSection({ tool }: SeoSectionProps) {
       <section>
         <h2 className="text-xl font-bold text-foreground mb-3">What This Tool Does</h2>
         <p className="text-muted-foreground leading-relaxed max-w-prose">{tool.introText}</p>
+        <p className="text-sm text-muted-foreground mt-3 max-w-prose">
+          This tool is part of our <Link to={`/category/${tool.categorySlug}`} className="text-primary hover:underline">{tool.category}</Link> collection. All processing happens in your browser — your data never leaves your device.
+        </p>
       </section>
 
       {/* Example */}
@@ -49,6 +54,24 @@ export function SeoSection({ tool }: SeoSectionProps) {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Use Case Tags */}
+      {tool.useCaseTags && tool.useCaseTags.length > 0 && (
+        <section>
+          <h3 className="text-sm font-medium text-foreground mb-2">Browse by use case:</h3>
+          <div className="flex flex-wrap gap-2">
+            {tool.useCaseTags.map(tag => (
+              <Link
+                key={tag}
+                to={`/tools?useCase=${tag}`}
+                className="px-3 py-1 text-xs font-medium rounded-full border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                {useCaseLabels[tag]}
+              </Link>
+            ))}
+          </div>
         </section>
       )}
 

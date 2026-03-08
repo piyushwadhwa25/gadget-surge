@@ -3,13 +3,17 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { SearchBar } from '@/components/SearchBar';
 import { ToolCard } from '@/components/ToolCard';
 import { JsonLd } from '@/components/JsonLd';
-import { getFeaturedTools, getPopularTools, getToolsByCategory, tools, categories } from '@/lib/tools-registry';
-import { Zap, ArrowRight, Code2, Type, Globe, ImageIcon } from 'lucide-react';
+import {
+  getFeaturedTools, getPopularTools, getRecentlyAddedTools,
+  getToolsByCategory, getToolsByUseCaseTag, tools, categories,
+  useCaseLabels, getAllUseCaseTags, type UseCaseTag,
+} from '@/lib/tools-registry';
+import { Zap, ArrowRight, Code2, Type, ImageIcon, Shield, Globe, Sparkles } from 'lucide-react';
 
 export default function Index() {
   usePageMeta({
     title: 'GadgetSurge — Free Online Tools for Developers, Creators & Everyday Tasks',
-    description: 'A growing collection of free browser-based utilities. JSON formatter, Base64 encoder, word counter, password generator, and more. No signup required.',
+    description: `${tools.length} free browser-based utilities. JSON formatter, image resizer, word counter, password generator, and more. No signup, no data collection — 100% client-side.`,
     canonical: 'https://gadgetsurge.com/',
     ogTitle: 'GadgetSurge — Free Online Tools',
     ogDescription: 'Free browser-based utilities for developers, creators, and everyday tasks.',
@@ -17,9 +21,11 @@ export default function Index() {
 
   const featured = getFeaturedTools();
   const popular = getPopularTools();
+  const recent = getRecentlyAddedTools();
   const devTools = getToolsByCategory('developer-tools');
   const textTools = getToolsByCategory('text-tools');
   const imageTools = getToolsByCategory('image-tools');
+  const activeTags = getAllUseCaseTags();
 
   const websiteLd = {
     '@context': 'https://schema.org',
@@ -49,46 +55,65 @@ export default function Index() {
           Free Online Tools for <br className="hidden sm:block" />
           <span className="text-primary">Developers</span>, <span className="text-primary">Creators</span> & Everyone
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed">
           {tools.length} lightweight browser-based utilities. No signup, no data collection — everything runs in your browser.
         </p>
+        <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-8">
+          Format JSON, resize images, generate passwords, count words, convert data formats, and much more — all free and private.
+        </p>
         <SearchBar large className="max-w-xl mx-auto" />
-        <p className="mt-3 text-xs text-muted-foreground">{tools.length} free tools • 100% client-side</p>
+        <p className="mt-3 text-xs text-muted-foreground">{tools.length} free tools • 100% client-side • No signup required</p>
       </section>
 
       {/* Value props */}
       <section className="container mx-auto px-4 pb-14">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
           {[
-            { icon: Code2, title: 'Developer Tools', desc: `${devTools.length} tools to format, encode, decode, and convert data.` },
-            { icon: Type, title: 'Text Tools', desc: `${textTools.length} tools to count, convert, sort, and generate text.` },
-            { icon: ImageIcon, title: 'Image Tools', desc: `${imageTools.length} tools to resize, convert, compress, and inspect images.` },
-          ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="text-center p-6 rounded-xl border border-border bg-card">
-              <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
-                <Icon className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-semibold text-card-foreground mb-1">{title}</h3>
-              <p className="text-sm text-muted-foreground">{desc}</p>
+            { icon: Code2, title: 'Developer Tools', desc: `${devTools.length} formatting, encoding, and debugging tools.`, path: '/category/developer-tools' },
+            { icon: Type, title: 'Text Tools', desc: `${textTools.length} counting, conversion, and generator tools.`, path: '/category/text-tools' },
+            { icon: ImageIcon, title: 'Image Tools', desc: `${imageTools.length} resize, convert, and compression tools.`, path: '/category/image-tools' },
+            { icon: Shield, title: '100% Private', desc: 'All tools run in your browser. No data leaves your device.' },
+          ].map(({ icon: Icon, title, desc, path }) => (
+            <div key={title} className="text-center p-5 rounded-xl border border-border bg-card hover:border-primary/30 transition-all">
+              {path ? (
+                <Link to={path} className="block">
+                  <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-card-foreground mb-1 text-sm">{title}</h3>
+                  <p className="text-xs text-muted-foreground">{desc}</p>
+                </Link>
+              ) : (
+                <>
+                  <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-card-foreground mb-1 text-sm">{title}</h3>
+                  <p className="text-xs text-muted-foreground">{desc}</p>
+                </>
+              )}
             </div>
           ))}
         </div>
       </section>
 
-      {/* Featured Tools */}
+      {/* Top Free Online Tools */}
       <section className="container mx-auto px-4 pb-14">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-foreground">Featured Tools</h2>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Top Free Online Tools</h2>
+          </div>
           <Link to="/tools" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
-            View all <ArrowRight className="h-3.5 w-3.5" />
+            View all {tools.length} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {featured.slice(0, 6).map(tool => <ToolCard key={tool.slug} tool={tool} />)}
+          {featured.slice(0, 9).map(tool => <ToolCard key={tool.slug} tool={tool} />)}
         </div>
       </section>
 
-      {/* Developer Tools */}
+      {/* Category preview: Developer Tools */}
       <section className="container mx-auto px-4 pb-14">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-foreground">Developer Tools</h2>
@@ -101,7 +126,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Text Tools */}
+      {/* Category preview: Text Tools */}
       <section className="container mx-auto px-4 pb-14">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-foreground">Text Tools</h2>
@@ -114,7 +139,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Image Tools */}
+      {/* Category preview: Image Tools */}
       <section className="container mx-auto px-4 pb-14">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-foreground">Image Tools</h2>
@@ -127,6 +152,16 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Recently Added */}
+      {recent.length > 0 && (
+        <section className="container mx-auto px-4 pb-14">
+          <h2 className="text-xl font-bold text-foreground mb-6">Recently Added</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {recent.slice(0, 8).map(tool => <ToolCard key={tool.slug} tool={tool} />)}
+          </div>
+        </section>
+      )}
+
       {/* Popular Tools */}
       {popular.length > 0 && (
         <section className="container mx-auto px-4 pb-14">
@@ -137,20 +172,47 @@ export default function Index() {
         </section>
       )}
 
-      {/* Browse Categories */}
+      {/* Browse by Use Case */}
+      <section className="container mx-auto px-4 pb-14">
+        <h2 className="text-xl font-bold text-foreground mb-6">Browse by Use Case</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {activeTags.map(tag => {
+            const count = getToolsByUseCaseTag(tag).length;
+            return (
+              <Link
+                key={tag}
+                to={`/tools?useCase=${tag}`}
+                className="text-center p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 transition-all"
+              >
+                <span className="text-sm font-medium text-card-foreground">{useCaseLabels[tag]}</span>
+                <span className="block text-xs text-muted-foreground mt-1">{count} tools</span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Browse by Category */}
       <section className="container mx-auto px-4 pb-16">
         <h2 className="text-xl font-bold text-foreground mb-6">Browse by Category</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {categories.map(cat => (
-            <Link
-              key={cat.slug}
-              to={`/category/${cat.slug}`}
-              className="text-center p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 transition-all"
-            >
-              <span className="text-sm font-medium text-card-foreground">{cat.name}</span>
-              {cat.comingSoon && <span className="block text-[10px] text-accent font-semibold mt-1">Coming Soon</span>}
-            </Link>
-          ))}
+          {categories.map(cat => {
+            const count = getToolsByCategory(cat.slug).length;
+            return (
+              <Link
+                key={cat.slug}
+                to={`/category/${cat.slug}`}
+                className="text-center p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 transition-all"
+              >
+                <span className="text-sm font-medium text-card-foreground">{cat.name}</span>
+                {cat.comingSoon ? (
+                  <span className="block text-[10px] text-accent font-semibold mt-1">Coming Soon</span>
+                ) : (
+                  <span className="block text-xs text-muted-foreground mt-1">{count} tools</span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>

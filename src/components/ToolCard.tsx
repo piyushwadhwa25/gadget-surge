@@ -16,15 +16,23 @@ export function ToolCard({ tool }: ToolCardProps) {
         <h3 className="text-base font-semibold text-card-foreground group-hover:text-primary transition-colors">
           {tool.name}
         </h3>
-        {tool.popular && (
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent">Popular</span>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {tool.recentlyAdded && (
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">New</span>
+          )}
+          {tool.popular && (
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-accent">Popular</span>
+          )}
+        </div>
       </div>
       <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
         {tool.description}
       </p>
-      <div className="mt-3 flex items-center text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-        Open tool <ArrowRight className="ml-1 h-3 w-3" />
+      <div className="mt-2 flex items-center justify-between">
+        <span className="text-[11px] text-muted-foreground/70">{tool.category}</span>
+        <span className="flex items-center text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+          Open tool <ArrowRight className="ml-1 h-3 w-3" />
+        </span>
       </div>
     </Link>
   );
