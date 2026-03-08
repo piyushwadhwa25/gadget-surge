@@ -3,6 +3,8 @@ export interface FaqItem {
   answer: string;
 }
 
+export type UseCaseTag = 'formatting' | 'conversion' | 'encoding' | 'decoding' | 'generators' | 'text-cleanup' | 'image-editing' | 'compression' | 'debugging' | 'productivity' | 'counting';
+
 export interface ToolConfig {
   name: string;
   slug: string;
@@ -21,6 +23,8 @@ export interface ToolConfig {
   useCases: string[];
   featured?: boolean;
   popular?: boolean;
+  recentlyAdded?: boolean;
+  useCaseTags?: UseCaseTag[];
 }
 
 export interface CategoryConfig {
@@ -29,7 +33,25 @@ export interface CategoryConfig {
   description: string;
   introText: string;
   comingSoon?: boolean;
+  whoIsItFor?: string;
+  commonUseCases?: string[];
+  faqItems?: FaqItem[];
+  relatedCategorySlugs?: string[];
 }
+
+export const useCaseLabels: Record<UseCaseTag, string> = {
+  formatting: 'Formatting',
+  conversion: 'Conversion',
+  encoding: 'Encoding',
+  decoding: 'Decoding',
+  generators: 'Generators',
+  'text-cleanup': 'Text Cleanup',
+  'image-editing': 'Image Editing',
+  compression: 'Compression',
+  debugging: 'Debugging',
+  productivity: 'Productivity',
+  counting: 'Counting',
+};
 
 export const categories: CategoryConfig[] = [
   {
@@ -37,32 +59,57 @@ export const categories: CategoryConfig[] = [
     slug: 'developer-tools',
     description: 'Essential tools for software developers and engineers.',
     introText: 'A collection of free browser-based developer tools to help you format, encode, decode, convert, and validate data. All tools run entirely in your browser — no data is sent to any server.',
+    whoIsItFor: 'Software developers, web developers, DevOps engineers, QA testers, and anyone working with APIs, data formats, or code.',
+    commonUseCases: ['Formatting JSON, HTML, and SQL for readability', 'Encoding and decoding Base64 and URL data', 'Converting between data formats like CSV and JSON', 'Debugging JWT tokens and regex patterns', 'Generating UUIDs and converting timestamps'],
+    faqItems: [
+      { question: 'Are these developer tools really free?', answer: 'Yes. Every tool on GadgetSurge is completely free with no signup, no account, and no hidden fees.' },
+      { question: 'Is my data safe when using these tools?', answer: 'Absolutely. All processing happens locally in your browser. No data is ever uploaded to a server.' },
+      { question: 'Do I need to install anything?', answer: 'No. All tools run directly in your browser. Just open the page and start using them.' },
+    ],
+    relatedCategorySlugs: ['text-tools', 'image-tools'],
   },
   {
     name: 'Image Tools',
     slug: 'image-tools',
     description: 'Tools for image conversion, resizing, and optimization.',
-    introText: 'A collection of free browser-based image tools. Resize, crop, convert, compress, and inspect images — all processing happens entirely in your browser for complete privacy.',
+    introText: 'A collection of free browser-based image tools. Resize, crop, convert, compress, and inspect images — all processing happens entirely in your browser for complete privacy. Your images never leave your device.',
+    whoIsItFor: 'Designers, content creators, social media managers, web developers, bloggers, and anyone who works with images regularly.',
+    commonUseCases: ['Resizing images for social media or web uploads', 'Converting between PNG, JPG, and WebP formats', 'Compressing images to reduce file size', 'Picking colors from images for design work', 'Generating favicons for websites'],
+    faqItems: [
+      { question: 'Are my images uploaded to a server?', answer: 'No. All image processing happens in your browser using the Canvas API. Your files never leave your device.' },
+      { question: 'What image formats are supported?', answer: 'PNG, JPG, JPEG, WebP, GIF, and any format your browser can display.' },
+      { question: 'Is there a file size limit?', answer: 'There is no hard limit, but very large images may process slowly depending on your device.' },
+    ],
+    relatedCategorySlugs: ['developer-tools', 'text-tools'],
   },
   {
     name: 'Text Tools',
     slug: 'text-tools',
     description: 'Tools for text manipulation, formatting, counting, and generation.',
     introText: 'A collection of free browser-based text utilities. Count words, convert case, generate passwords, clean up text, and more — all running entirely in your browser with no data sent to any server.',
+    whoIsItFor: 'Writers, editors, students, content creators, SEO professionals, and developers working with text data.',
+    commonUseCases: ['Counting words and characters for content limits', 'Converting text between different cases', 'Generating secure passwords and usernames', 'Cleaning up text by removing extra spaces or duplicates', 'Creating URL-friendly slugs from titles'],
+    faqItems: [
+      { question: 'Can I use these tools for long documents?', answer: 'Yes. All text tools handle large inputs well. Processing happens instantly in your browser.' },
+      { question: 'Do text tools support Unicode?', answer: 'Yes. Most tools handle Unicode characters, emojis, and special characters correctly.' },
+    ],
+    relatedCategorySlugs: ['developer-tools', 'image-tools'],
   },
   {
     name: 'Document Tools',
     slug: 'document-tools',
     description: 'Tools for document conversion and processing.',
-    introText: 'Document tools coming soon.',
+    introText: 'Document tools for converting, formatting, and processing documents are coming soon. In the meantime, check out our developer tools for data format conversion, or our text tools for content manipulation.',
     comingSoon: true,
+    relatedCategorySlugs: ['developer-tools', 'text-tools'],
   },
   {
     name: 'Calculators',
     slug: 'calculators',
     description: 'Useful online calculators for everyday tasks.',
-    introText: 'Calculators coming soon.',
+    introText: 'Online calculators for everyday math, finance, and productivity are coming soon. While you wait, explore our existing tools for text counting, data conversion, and image processing.',
     comingSoon: true,
+    relatedCategorySlugs: ['text-tools', 'developer-tools'],
   },
 ];
 
@@ -89,6 +136,7 @@ export const tools: ToolConfig[] = [
     useCases: ['Debugging API responses', 'Formatting configuration files', 'Validating JSON payloads before sending requests'],
     featured: true,
     popular: true,
+    useCaseTags: ['formatting', 'debugging'],
   },
   {
     name: 'Base64 Encoder',
@@ -111,6 +159,7 @@ export const tools: ToolConfig[] = [
     type: 'standard',
     useCases: ['Encoding data for URLs', 'Embedding images in HTML/CSS', 'Encoding API authentication tokens'],
     featured: true,
+    useCaseTags: ['encoding'],
   },
   {
     name: 'Base64 Decoder',
@@ -132,6 +181,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['base64-encoder', 'url-decoder', 'jwt-decoder'],
     type: 'standard',
     useCases: ['Inspecting encoded API responses', 'Decoding email attachments', 'Reading encoded configuration values'],
+    useCaseTags: ['decoding'],
   },
   {
     name: 'Regex Tester',
@@ -155,6 +205,7 @@ export const tools: ToolConfig[] = [
     useCases: ['Validating email or URL patterns', 'Extracting data from text', 'Building search and replace patterns'],
     featured: true,
     popular: true,
+    useCaseTags: ['debugging', 'productivity'],
   },
   {
     name: 'UUID Generator',
@@ -178,6 +229,7 @@ export const tools: ToolConfig[] = [
     useCases: ['Generating database primary keys', 'Creating unique session tokens', 'Testing applications that require unique IDs'],
     featured: true,
     popular: true,
+    useCaseTags: ['generators'],
   },
   {
     name: 'Unix Timestamp Converter',
@@ -200,6 +252,7 @@ export const tools: ToolConfig[] = [
     type: 'custom',
     useCases: ['Converting API timestamps', 'Debugging date-related bugs', 'Converting log file timestamps'],
     popular: true,
+    useCaseTags: ['conversion', 'debugging'],
   },
   {
     name: 'CSV to JSON Converter',
@@ -221,6 +274,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['json-to-csv', 'json-formatter', 'url-encoder'],
     type: 'standard',
     useCases: ['Converting spreadsheet exports', 'Preparing data for APIs', 'Migrating data between formats'],
+    useCaseTags: ['conversion'],
   },
   {
     name: 'JSON to CSV Converter',
@@ -242,6 +296,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['csv-to-json', 'json-formatter', 'url-decoder'],
     type: 'standard',
     useCases: ['Exporting API data to spreadsheets', 'Creating reports from JSON data', 'Data migration tasks'],
+    useCaseTags: ['conversion'],
   },
   {
     name: 'URL Encoder',
@@ -263,6 +318,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['url-decoder', 'base64-encoder', 'json-formatter'],
     type: 'standard',
     useCases: ['Encoding query parameters', 'Building API request URLs', 'Encoding form data for submission'],
+    useCaseTags: ['encoding'],
   },
   {
     name: 'URL Decoder',
@@ -284,6 +340,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['url-encoder', 'base64-decoder', 'json-formatter'],
     type: 'standard',
     useCases: ['Debugging encoded URLs', 'Reading query parameters', 'Inspecting redirect URLs'],
+    useCaseTags: ['decoding'],
   },
   {
     name: 'JWT Decoder',
@@ -306,6 +363,7 @@ export const tools: ToolConfig[] = [
     type: 'standard',
     useCases: ['Inspecting authentication tokens', 'Debugging API auth issues', 'Checking token expiration claims'],
     featured: true,
+    useCaseTags: ['decoding', 'debugging'],
   },
   {
     name: 'Markdown to HTML Converter',
@@ -327,6 +385,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['html-formatter', 'json-formatter', 'sql-formatter'],
     type: 'standard',
     useCases: ['Converting README files', 'Generating HTML from notes', 'Converting blog posts from Markdown'],
+    useCaseTags: ['conversion', 'formatting'],
   },
   {
     name: 'HTML Formatter',
@@ -348,6 +407,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['markdown-to-html', 'sql-formatter', 'json-formatter'],
     type: 'standard',
     useCases: ['Cleaning up minified HTML', 'Formatting email templates', 'Making HTML code review easier'],
+    useCaseTags: ['formatting'],
   },
   {
     name: 'SQL Formatter',
@@ -369,6 +429,7 @@ export const tools: ToolConfig[] = [
     relatedToolSlugs: ['json-formatter', 'html-formatter', 'csv-to-json'],
     type: 'standard',
     useCases: ['Formatting queries from logs', 'Cleaning up generated SQL', 'Making SQL code reviews easier'],
+    useCaseTags: ['formatting'],
   },
   {
     name: 'Color Converter',
@@ -387,44 +448,47 @@ export const tools: ToolConfig[] = [
       { question: 'Can I input short HEX codes?', answer: 'Yes. Both 3-digit (#F53) and 6-digit (#FF5533) HEX codes are supported.' },
       { question: 'What is HSL?', answer: 'HSL stands for Hue, Saturation, Lightness — a more intuitive way to describe colors compared to RGB.' },
     ],
-    relatedToolSlugs: ['json-formatter', 'url-encoder', 'base64-encoder'],
+    relatedToolSlugs: ['image-color-picker', 'json-formatter', 'url-encoder'],
     type: 'custom',
     useCases: ['Converting design tokens', 'Matching CSS colors across formats', 'Translating Figma colors to code'],
     featured: true,
+    useCaseTags: ['conversion'],
   },
   // ===== TEXT TOOLS =====
-  { name: 'Word Counter', slug: 'word-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count words, characters, sentences, and paragraphs in any text.', keywords: ['word count', 'character count', 'text counter'], seoTitle: 'Word Counter Online — Count Words & Characters Free', metaDescription: 'Count words, characters, sentences, and paragraphs instantly. Free online word counter.', introText: 'Paste any text and instantly see word count, character count, line count, and paragraph count.', exampleInput: 'The quick brown fox jumps over the lazy dog. This is a sample sentence for counting.', exampleOutput: 'Words: 16\nCharacters: 82\nCharacters (no spaces): 68\nLines: 1\nParagraphs: 1', faqItems: [{ question: 'How are words counted?', answer: 'Words are split on whitespace.' }, { question: 'Does it count punctuation?', answer: 'Punctuation is included in character counts but not word counts.' }], relatedToolSlugs: ['character-counter', 'sentence-counter', 'paragraph-counter'], type: 'standard', useCases: ['Checking essay word limits', 'Social media post length', 'Content requirements'], featured: true, popular: true },
-  { name: 'Character Counter', slug: 'character-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count characters with and without spaces in any text.', keywords: ['character count', 'letter count', 'char counter'], seoTitle: 'Character Counter Online — Count Characters Free', metaDescription: 'Count characters with and without spaces instantly. Free online character counter.', introText: 'Get an accurate character count showing characters with spaces, without spaces, letters, and digits.', exampleInput: 'Hello World 123!', exampleOutput: 'Characters (with spaces): 16\nCharacters (no spaces): 14\nLetters: 10\nDigits: 3', faqItems: [{ question: 'Are spaces counted?', answer: 'Both counts are shown — with and without spaces.' }], relatedToolSlugs: ['word-counter', 'sentence-counter', 'remove-extra-spaces'], type: 'standard', useCases: ['Twitter/X limits', 'SMS length', 'Form input validation'] },
-  { name: 'Sentence Counter', slug: 'sentence-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count sentences in any text.', keywords: ['sentence count', 'sentence counter'], seoTitle: 'Sentence Counter Online — Count Sentences Free', metaDescription: 'Count sentences in any text instantly. Free online sentence counter.', introText: 'Estimate sentence count using punctuation-based detection.', exampleInput: 'Hello world. How are you? I am fine! Four sentences.', exampleOutput: 'Sentences: 4', faqItems: [{ question: 'How are sentences detected?', answer: 'By splitting on periods, exclamation marks, and question marks.' }], relatedToolSlugs: ['word-counter', 'paragraph-counter', 'character-counter'], type: 'standard', useCases: ['Writing analysis', 'Content structure', 'Academic review'] },
-  { name: 'Paragraph Counter', slug: 'paragraph-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count paragraphs in any text.', keywords: ['paragraph count', 'paragraph counter'], seoTitle: 'Paragraph Counter Online — Count Paragraphs Free', metaDescription: 'Count paragraphs in any text instantly. Free online paragraph counter.', introText: 'Count paragraphs based on blank-line separation.', exampleInput: 'First paragraph.\n\nSecond paragraph.\n\nThird.', exampleOutput: 'Paragraphs: 3', faqItems: [{ question: 'How are paragraphs detected?', answer: 'Separated by blank lines (double line breaks).' }], relatedToolSlugs: ['word-counter', 'sentence-counter', 'character-counter'], type: 'standard', useCases: ['Essay structure', 'Content formatting', 'Document analysis'] },
-  { name: 'Case Converter', slug: 'case-converter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Convert text to uppercase, lowercase, title case, or sentence case.', keywords: ['case converter', 'uppercase', 'lowercase', 'title case'], seoTitle: 'Case Converter Online — Change Text Case Free', metaDescription: 'Convert text between uppercase, lowercase, title case, and sentence case. Free online case converter.', introText: 'Transform text between different cases with one click. Supports uppercase, lowercase, title case, sentence case, and toggle case.', exampleInput: 'the quick brown fox jumps over the lazy dog', exampleOutput: 'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG', faqItems: [{ question: 'What is title case?', answer: 'Capitalizes the first letter of every word.' }, { question: 'What is toggle case?', answer: 'Inverts the case of each character.' }], relatedToolSlugs: ['word-counter', 'slug-generator', 'remove-extra-spaces'], type: 'custom', useCases: ['Formatting headings', 'Normalizing text', 'Variable name conversion'], featured: true, popular: true },
-  { name: 'Remove Extra Spaces', slug: 'remove-extra-spaces', category: 'Text Tools', categorySlug: 'text-tools', description: 'Collapse multiple spaces into single spaces and trim text.', keywords: ['remove spaces', 'trim', 'clean text'], seoTitle: 'Remove Extra Spaces Online — Clean Text Free', metaDescription: 'Remove extra spaces and trim text instantly. Free online space remover.', introText: 'Clean up text by collapsing repeated spaces and trimming whitespace.', exampleInput: 'Hello    world.   Extra   spaces.', exampleOutput: 'Hello world. Extra spaces.', faqItems: [{ question: 'Does it remove all spaces?', answer: 'Only extra spaces. Single spaces are preserved.' }], relatedToolSlugs: ['remove-line-breaks', 'case-converter', 'word-counter'], type: 'standard', useCases: ['Cleaning pasted text', 'Fixing formatting', 'Data preparation'] },
-  { name: 'Remove Line Breaks', slug: 'remove-line-breaks', category: 'Text Tools', categorySlug: 'text-tools', description: 'Replace line breaks with spaces to create single-line text.', keywords: ['remove line breaks', 'join lines', 'single line'], seoTitle: 'Remove Line Breaks Online — Join Lines Free', metaDescription: 'Remove line breaks and join text into a single line. Free online tool.', introText: 'Replace all line breaks with spaces to convert multi-line text into a single line.', exampleInput: 'Line one\nLine two\nLine three', exampleOutput: 'Line one Line two Line three', faqItems: [{ question: 'Does it preserve spacing?', answer: 'Each line break becomes a single space.' }], relatedToolSlugs: ['remove-extra-spaces', 'text-sorter', 'word-counter'], type: 'standard', useCases: ['Cleaning PDF text', 'Fixing email formatting', 'Spreadsheet prep'] },
-  { name: 'Text Sorter', slug: 'text-sorter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Sort lines of text alphabetically ascending or descending.', keywords: ['sort text', 'sort lines', 'alphabetical sort'], seoTitle: 'Text Sorter Online — Sort Lines Alphabetically Free', metaDescription: 'Sort lines of text alphabetically. Free online text sorter.', introText: 'Sort lines alphabetically with ascending/descending order and optional case-insensitive sorting.', exampleInput: 'Banana\nApple\nCherry\nDate\nElderberry', exampleOutput: 'Apple\nBanana\nCherry\nDate\nElderberry', faqItems: [{ question: 'Is sorting case-sensitive?', answer: 'Case sensitivity can be toggled. Default is case-insensitive.' }], relatedToolSlugs: ['duplicate-line-remover', 'reverse-text', 'word-counter'], type: 'custom', useCases: ['Sorting name lists', 'Organizing data', 'Cleaning CSV rows'] },
-  { name: 'Duplicate Line Remover', slug: 'duplicate-line-remover', category: 'Text Tools', categorySlug: 'text-tools', description: 'Remove duplicate lines while preserving original order.', keywords: ['remove duplicates', 'unique lines', 'deduplicate'], seoTitle: 'Duplicate Line Remover Online — Remove Duplicates Free', metaDescription: 'Remove duplicate lines while preserving order. Free online duplicate remover.', introText: 'Remove duplicate lines from any text. First occurrence is kept.', exampleInput: 'Apple\nBanana\nApple\nCherry\nBanana\nDate', exampleOutput: 'Apple\nBanana\nCherry\nDate', faqItems: [{ question: 'Which duplicate is kept?', answer: 'The first occurrence. All subsequent duplicates are removed.' }], relatedToolSlugs: ['text-sorter', 'remove-extra-spaces', 'word-counter'], type: 'standard', useCases: ['Cleaning email lists', 'Removing duplicate data', 'Unique list prep'] },
-  { name: 'Reverse Text', slug: 'reverse-text', category: 'Text Tools', categorySlug: 'text-tools', description: 'Reverse text by characters or by word order.', keywords: ['reverse text', 'flip text', 'backwards'], seoTitle: 'Reverse Text Online — Flip Text Backwards Free', metaDescription: 'Reverse text by characters or word order. Free online text reverser.', introText: 'Reverse any text character by character or by word order.', exampleInput: 'Hello World', exampleOutput: 'Reversed characters:\ndlroW olleH\n\nReversed words:\nWorld Hello', faqItems: [{ question: 'What modes are available?', answer: 'Both character reversal and word order reversal are shown.' }], relatedToolSlugs: ['case-converter', 'text-sorter', 'slug-generator'], type: 'custom', useCases: ['Backwards text for fun', 'String manipulation testing', 'Puzzles'] },
-  { name: 'Slug Generator', slug: 'slug-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Convert text into a clean URL-friendly slug.', keywords: ['slug', 'url slug', 'permalink', 'slug generator'], seoTitle: 'Slug Generator Online — Create URL Slugs Free', metaDescription: 'Convert any text into a URL-friendly slug. Free online slug generator.', introText: 'Convert text into a URL-safe slug. Lowercases, replaces spaces with hyphens, removes special characters.', exampleInput: 'How to Build a REST API with Node.js — A Complete Guide!', exampleOutput: 'how-to-build-a-rest-api-with-nodejs-a-complete-guide', faqItems: [{ question: 'What characters are removed?', answer: 'Special characters and punctuation. Accented characters are normalized.' }], relatedToolSlugs: ['case-converter', 'url-encoder', 'remove-extra-spaces'], type: 'standard', useCases: ['Blog post URLs', 'SEO permalinks', 'Clean API endpoints'], popular: true },
-  { name: 'Lorem Ipsum Generator', slug: 'lorem-ipsum-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Generate lorem ipsum placeholder text by paragraph count.', keywords: ['lorem ipsum', 'placeholder text', 'dummy text'], seoTitle: 'Lorem Ipsum Generator Online — Generate Dummy Text Free', metaDescription: 'Generate lorem ipsum placeholder text. Free online generator.', introText: 'Generate classic lorem ipsum placeholder text for designs and mockups.', exampleInput: 'Count: 2', exampleOutput: 'Lorem ipsum dolor sit amet...\n\nDuis aute irure dolor...', faqItems: [{ question: 'What is lorem ipsum?', answer: 'Placeholder text used in design and publishing.' }], relatedToolSlugs: ['word-counter', 'paragraph-counter', 'random-password-generator'], type: 'custom', useCases: ['Design mockups', 'Testing layouts', 'Prototyping'], featured: true },
-  { name: 'Random Password Generator', slug: 'random-password-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Generate secure random passwords with configurable options.', keywords: ['password generator', 'random password', 'secure password'], seoTitle: 'Random Password Generator Online — Secure Passwords Free', metaDescription: 'Generate secure random passwords. Free online password generator.', introText: 'Generate cryptographically secure random passwords with configurable length and character types.', exampleInput: 'Length: 16', exampleOutput: 'aB3$xK9!mZ2&pQ7@', faqItems: [{ question: 'Are passwords truly random?', answer: 'Yes — using the Web Crypto API.' }, { question: 'Recommended length?', answer: 'At least 12-16 characters with mixed types.' }], relatedToolSlugs: ['random-username-generator', 'uuid-generator', 'lorem-ipsum-generator'], type: 'custom', useCases: ['Account passwords', 'API keys', 'Test credentials'], popular: true },
-  { name: 'Random Username Generator', slug: 'random-username-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Generate random usernames from adjective-noun combinations.', keywords: ['username generator', 'random username', 'name generator'], seoTitle: 'Random Username Generator Online — Create Usernames Free', metaDescription: 'Generate random usernames. Free online username generator.', introText: 'Generate unique random usernames by combining adjectives, nouns, and numbers.', exampleInput: 'Count: 5', exampleOutput: 'SwiftHawk423\nBrightWolf891\nCoolStorm156', faqItems: [{ question: 'How are usernames generated?', answer: 'Random adjective + noun + number (0-999).' }], relatedToolSlugs: ['random-password-generator', 'uuid-generator', 'lorem-ipsum-generator'], type: 'custom', useCases: ['Social media handles', 'Test accounts', 'Brainstorming names'] },
-  { name: 'Text to List Converter', slug: 'text-to-list', category: 'Text Tools', categorySlug: 'text-tools', description: 'Convert comma-separated or line-separated text into formatted lists.', keywords: ['text to list', 'comma to list', 'bullet list', 'numbered list'], seoTitle: 'Text to List Converter Online — Create Lists Free', metaDescription: 'Convert text into bullet or numbered lists. Free online list converter.', introText: 'Convert comma-separated values or line-separated text into clean bullet or numbered lists.', exampleInput: 'Apples, Bananas, Cherries, Dates, Elderberries', exampleOutput: '• Apples\n• Bananas\n• Cherries\n• Dates\n• Elderberries', faqItems: [{ question: 'What separators are supported?', answer: 'Commas and line breaks.' }], relatedToolSlugs: ['word-counter', 'text-sorter', 'duplicate-line-remover'], type: 'custom', useCases: ['Formatting spreadsheet data', 'Creating clean lists', 'Documentation'] },
+  { name: 'Word Counter', slug: 'word-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count words, characters, sentences, and paragraphs in any text.', keywords: ['word count', 'character count', 'text counter'], seoTitle: 'Word Counter Online — Count Words & Characters Free', metaDescription: 'Count words, characters, sentences, and paragraphs instantly. Free online word counter.', introText: 'Paste any text and instantly see word count, character count, line count, and paragraph count. Perfect for checking essay word limits, social media character limits, and content requirements.', exampleInput: 'The quick brown fox jumps over the lazy dog. This is a sample sentence for counting.', exampleOutput: 'Words: 16\nCharacters: 82\nCharacters (no spaces): 68\nLines: 1\nParagraphs: 1', faqItems: [{ question: 'How are words counted?', answer: 'Words are split on whitespace.' }, { question: 'Does it count punctuation?', answer: 'Punctuation is included in character counts but not word counts.' }], relatedToolSlugs: ['character-counter', 'sentence-counter', 'paragraph-counter'], type: 'standard', useCases: ['Checking essay word limits', 'Social media post length', 'Content requirements'], featured: true, popular: true, useCaseTags: ['counting', 'productivity'] },
+  { name: 'Character Counter', slug: 'character-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count characters with and without spaces in any text.', keywords: ['character count', 'letter count', 'char counter'], seoTitle: 'Character Counter Online — Count Characters Free', metaDescription: 'Count characters with and without spaces instantly. Free online character counter.', introText: 'Get an accurate character count showing characters with spaces, without spaces, letters, and digits. Essential for Twitter/X posts, SMS messages, and form validation.', exampleInput: 'Hello World 123!', exampleOutput: 'Characters (with spaces): 16\nCharacters (no spaces): 14\nLetters: 10\nDigits: 3', faqItems: [{ question: 'Are spaces counted?', answer: 'Both counts are shown — with and without spaces.' }], relatedToolSlugs: ['word-counter', 'sentence-counter', 'remove-extra-spaces'], type: 'standard', useCases: ['Twitter/X limits', 'SMS length', 'Form input validation'], useCaseTags: ['counting', 'productivity'] },
+  { name: 'Sentence Counter', slug: 'sentence-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count sentences in any text.', keywords: ['sentence count', 'sentence counter'], seoTitle: 'Sentence Counter Online — Count Sentences Free', metaDescription: 'Count sentences in any text instantly. Free online sentence counter.', introText: 'Estimate sentence count using punctuation-based detection. Useful for writing analysis, content structure review, and academic work.', exampleInput: 'Hello world. How are you? I am fine! Four sentences.', exampleOutput: 'Sentences: 4', faqItems: [{ question: 'How are sentences detected?', answer: 'By splitting on periods, exclamation marks, and question marks.' }], relatedToolSlugs: ['word-counter', 'paragraph-counter', 'character-counter'], type: 'standard', useCases: ['Writing analysis', 'Content structure', 'Academic review'], useCaseTags: ['counting'] },
+  { name: 'Paragraph Counter', slug: 'paragraph-counter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Count paragraphs in any text.', keywords: ['paragraph count', 'paragraph counter'], seoTitle: 'Paragraph Counter Online — Count Paragraphs Free', metaDescription: 'Count paragraphs in any text instantly. Free online paragraph counter.', introText: 'Count paragraphs based on blank-line separation. Useful for checking essay structure and document formatting.', exampleInput: 'First paragraph.\n\nSecond paragraph.\n\nThird.', exampleOutput: 'Paragraphs: 3', faqItems: [{ question: 'How are paragraphs detected?', answer: 'Separated by blank lines (double line breaks).' }], relatedToolSlugs: ['word-counter', 'sentence-counter', 'character-counter'], type: 'standard', useCases: ['Essay structure', 'Content formatting', 'Document analysis'], useCaseTags: ['counting'] },
+  { name: 'Case Converter', slug: 'case-converter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Convert text to uppercase, lowercase, title case, or sentence case.', keywords: ['case converter', 'uppercase', 'lowercase', 'title case'], seoTitle: 'Case Converter Online — Change Text Case Free', metaDescription: 'Convert text between uppercase, lowercase, title case, and sentence case. Free online case converter.', introText: 'Transform text between different cases with one click. Supports uppercase, lowercase, title case, sentence case, and toggle case. Essential for formatting headings, normalizing data, and converting variable names.', exampleInput: 'the quick brown fox jumps over the lazy dog', exampleOutput: 'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG', faqItems: [{ question: 'What is title case?', answer: 'Capitalizes the first letter of every word.' }, { question: 'What is toggle case?', answer: 'Inverts the case of each character.' }], relatedToolSlugs: ['word-counter', 'slug-generator', 'remove-extra-spaces'], type: 'custom', useCases: ['Formatting headings', 'Normalizing text', 'Variable name conversion'], featured: true, popular: true, useCaseTags: ['conversion', 'text-cleanup'] },
+  { name: 'Remove Extra Spaces', slug: 'remove-extra-spaces', category: 'Text Tools', categorySlug: 'text-tools', description: 'Collapse multiple spaces into single spaces and trim text.', keywords: ['remove spaces', 'trim', 'clean text'], seoTitle: 'Remove Extra Spaces Online — Clean Text Free', metaDescription: 'Remove extra spaces and trim text instantly. Free online space remover.', introText: 'Clean up text by collapsing repeated spaces and trimming whitespace. Great for cleaning pasted text, fixing formatting issues, and preparing data.', exampleInput: 'Hello    world.   Extra   spaces.', exampleOutput: 'Hello world. Extra spaces.', faqItems: [{ question: 'Does it remove all spaces?', answer: 'Only extra spaces. Single spaces are preserved.' }], relatedToolSlugs: ['remove-line-breaks', 'case-converter', 'word-counter'], type: 'standard', useCases: ['Cleaning pasted text', 'Fixing formatting', 'Data preparation'], useCaseTags: ['text-cleanup'] },
+  { name: 'Remove Line Breaks', slug: 'remove-line-breaks', category: 'Text Tools', categorySlug: 'text-tools', description: 'Replace line breaks with spaces to create single-line text.', keywords: ['remove line breaks', 'join lines', 'single line'], seoTitle: 'Remove Line Breaks Online — Join Lines Free', metaDescription: 'Remove line breaks and join text into a single line. Free online tool.', introText: 'Replace all line breaks with spaces to convert multi-line text into a single line. Useful for cleaning PDF text, fixing email formatting, and preparing data for spreadsheets.', exampleInput: 'Line one\nLine two\nLine three', exampleOutput: 'Line one Line two Line three', faqItems: [{ question: 'Does it preserve spacing?', answer: 'Each line break becomes a single space.' }], relatedToolSlugs: ['remove-extra-spaces', 'text-sorter', 'word-counter'], type: 'standard', useCases: ['Cleaning PDF text', 'Fixing email formatting', 'Spreadsheet prep'], useCaseTags: ['text-cleanup'] },
+  { name: 'Text Sorter', slug: 'text-sorter', category: 'Text Tools', categorySlug: 'text-tools', description: 'Sort lines of text alphabetically ascending or descending.', keywords: ['sort text', 'sort lines', 'alphabetical sort'], seoTitle: 'Text Sorter Online — Sort Lines Alphabetically Free', metaDescription: 'Sort lines of text alphabetically. Free online text sorter.', introText: 'Sort lines alphabetically with ascending/descending order and optional case-insensitive sorting. Ideal for organizing name lists, data, and CSV rows.', exampleInput: 'Banana\nApple\nCherry\nDate\nElderberry', exampleOutput: 'Apple\nBanana\nCherry\nDate\nElderberry', faqItems: [{ question: 'Is sorting case-sensitive?', answer: 'Case sensitivity can be toggled. Default is case-insensitive.' }], relatedToolSlugs: ['duplicate-line-remover', 'reverse-text', 'word-counter'], type: 'custom', useCases: ['Sorting name lists', 'Organizing data', 'Cleaning CSV rows'], useCaseTags: ['text-cleanup', 'productivity'] },
+  { name: 'Duplicate Line Remover', slug: 'duplicate-line-remover', category: 'Text Tools', categorySlug: 'text-tools', description: 'Remove duplicate lines while preserving original order.', keywords: ['remove duplicates', 'unique lines', 'deduplicate'], seoTitle: 'Duplicate Line Remover Online — Remove Duplicates Free', metaDescription: 'Remove duplicate lines while preserving order. Free online duplicate remover.', introText: 'Remove duplicate lines from any text. First occurrence is kept, all subsequent duplicates are removed. Perfect for cleaning email lists, data deduplication, and preparing unique lists.', exampleInput: 'Apple\nBanana\nApple\nCherry\nBanana\nDate', exampleOutput: 'Apple\nBanana\nCherry\nDate', faqItems: [{ question: 'Which duplicate is kept?', answer: 'The first occurrence. All subsequent duplicates are removed.' }], relatedToolSlugs: ['text-sorter', 'remove-extra-spaces', 'word-counter'], type: 'standard', useCases: ['Cleaning email lists', 'Removing duplicate data', 'Unique list prep'], useCaseTags: ['text-cleanup'] },
+  { name: 'Reverse Text', slug: 'reverse-text', category: 'Text Tools', categorySlug: 'text-tools', description: 'Reverse text by characters or by word order.', keywords: ['reverse text', 'flip text', 'backwards'], seoTitle: 'Reverse Text Online — Flip Text Backwards Free', metaDescription: 'Reverse text by characters or word order. Free online text reverser.', introText: 'Reverse any text character by character or by word order. Useful for string manipulation testing, puzzles, and creative writing.', exampleInput: 'Hello World', exampleOutput: 'Reversed characters:\ndlroW olleH\n\nReversed words:\nWorld Hello', faqItems: [{ question: 'What modes are available?', answer: 'Both character reversal and word order reversal are shown.' }], relatedToolSlugs: ['case-converter', 'text-sorter', 'slug-generator'], type: 'custom', useCases: ['Backwards text for fun', 'String manipulation testing', 'Puzzles'], useCaseTags: ['productivity'] },
+  { name: 'Slug Generator', slug: 'slug-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Convert text into a clean URL-friendly slug.', keywords: ['slug', 'url slug', 'permalink', 'slug generator'], seoTitle: 'Slug Generator Online — Create URL Slugs Free', metaDescription: 'Convert any text into a URL-friendly slug. Free online slug generator.', introText: 'Convert text into a URL-safe slug. Lowercases, replaces spaces with hyphens, removes special characters. Essential for blog post URLs, SEO permalinks, and clean API endpoints.', exampleInput: 'How to Build a REST API with Node.js — A Complete Guide!', exampleOutput: 'how-to-build-a-rest-api-with-nodejs-a-complete-guide', faqItems: [{ question: 'What characters are removed?', answer: 'Special characters and punctuation. Accented characters are normalized.' }], relatedToolSlugs: ['case-converter', 'url-encoder', 'remove-extra-spaces'], type: 'standard', useCases: ['Blog post URLs', 'SEO permalinks', 'Clean API endpoints'], popular: true, useCaseTags: ['conversion', 'productivity'] },
+  { name: 'Lorem Ipsum Generator', slug: 'lorem-ipsum-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Generate lorem ipsum placeholder text by paragraph count.', keywords: ['lorem ipsum', 'placeholder text', 'dummy text'], seoTitle: 'Lorem Ipsum Generator Online — Generate Dummy Text Free', metaDescription: 'Generate lorem ipsum placeholder text. Free online generator.', introText: 'Generate classic lorem ipsum placeholder text for designs, mockups, and prototyping. Control the number of paragraphs to match your layout needs.', exampleInput: 'Count: 2', exampleOutput: 'Lorem ipsum dolor sit amet...\n\nDuis aute irure dolor...', faqItems: [{ question: 'What is lorem ipsum?', answer: 'Placeholder text used in design and publishing.' }], relatedToolSlugs: ['word-counter', 'paragraph-counter', 'random-password-generator'], type: 'custom', useCases: ['Design mockups', 'Testing layouts', 'Prototyping'], featured: true, useCaseTags: ['generators'] },
+  { name: 'Random Password Generator', slug: 'random-password-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Generate secure random passwords with configurable options.', keywords: ['password generator', 'random password', 'secure password'], seoTitle: 'Random Password Generator Online — Secure Passwords Free', metaDescription: 'Generate secure random passwords. Free online password generator.', introText: 'Generate cryptographically secure random passwords with configurable length and character types. Uses the Web Crypto API for true randomness.', exampleInput: 'Length: 16', exampleOutput: 'aB3$xK9!mZ2&pQ7@', faqItems: [{ question: 'Are passwords truly random?', answer: 'Yes — using the Web Crypto API.' }, { question: 'Recommended length?', answer: 'At least 12-16 characters with mixed types.' }], relatedToolSlugs: ['random-username-generator', 'uuid-generator', 'lorem-ipsum-generator'], type: 'custom', useCases: ['Account passwords', 'API keys', 'Test credentials'], popular: true, useCaseTags: ['generators'] },
+  { name: 'Random Username Generator', slug: 'random-username-generator', category: 'Text Tools', categorySlug: 'text-tools', description: 'Generate random usernames from adjective-noun combinations.', keywords: ['username generator', 'random username', 'name generator'], seoTitle: 'Random Username Generator Online — Create Usernames Free', metaDescription: 'Generate random usernames. Free online username generator.', introText: 'Generate unique random usernames by combining adjectives, nouns, and numbers. Great for social media handles, test accounts, and brainstorming.', exampleInput: 'Count: 5', exampleOutput: 'SwiftHawk423\nBrightWolf891\nCoolStorm156', faqItems: [{ question: 'How are usernames generated?', answer: 'Random adjective + noun + number (0-999).' }], relatedToolSlugs: ['random-password-generator', 'uuid-generator', 'lorem-ipsum-generator'], type: 'custom', useCases: ['Social media handles', 'Test accounts', 'Brainstorming names'], useCaseTags: ['generators'] },
+  { name: 'Text to List Converter', slug: 'text-to-list', category: 'Text Tools', categorySlug: 'text-tools', description: 'Convert comma-separated or line-separated text into formatted lists.', keywords: ['text to list', 'comma to list', 'bullet list', 'numbered list'], seoTitle: 'Text to List Converter Online — Create Lists Free', metaDescription: 'Convert text into bullet or numbered lists. Free online list converter.', introText: 'Convert comma-separated values or line-separated text into clean bullet or numbered lists. Useful for formatting spreadsheet data, creating documentation, and quick list generation.', exampleInput: 'Apples, Bananas, Cherries, Dates, Elderberries', exampleOutput: '• Apples\n• Bananas\n• Cherries\n• Dates\n• Elderberries', faqItems: [{ question: 'What separators are supported?', answer: 'Commas and line breaks.' }], relatedToolSlugs: ['word-counter', 'text-sorter', 'duplicate-line-remover'], type: 'custom', useCases: ['Formatting spreadsheet data', 'Creating clean lists', 'Documentation'], useCaseTags: ['conversion', 'formatting'] },
   // ===== IMAGE TOOLS =====
-  { name: 'Image Resizer', slug: 'image-resizer', category: 'Image Tools', categorySlug: 'image-tools', description: 'Resize images to custom dimensions with aspect ratio lock.', keywords: ['image resizer', 'resize image', 'scale image', 'dimensions'], seoTitle: 'Image Resizer Online — Resize Images Free', metaDescription: 'Resize images to any dimension with aspect ratio lock. Free online image resizer — 100% client-side.', introText: 'Upload an image, set your target width and height, and download the resized result. Optionally lock the aspect ratio to prevent distortion.', exampleInput: 'Upload an image file', exampleOutput: 'Resized image at your chosen dimensions', faqItems: [{ question: 'Is my image uploaded to a server?', answer: 'No. All processing happens in your browser. Your images never leave your device.' }, { question: 'What formats are supported?', answer: 'PNG, JPG, JPEG, WebP, GIF, and any browser-supported image format.' }, { question: 'Can I preserve the aspect ratio?', answer: 'Yes. Toggle the aspect ratio lock to keep proportions when changing width or height.' }], relatedToolSlugs: ['image-cropper', 'image-compressor', 'image-to-png'], type: 'custom', useCases: ['Social media image sizing', 'Thumbnail creation', 'Web optimization'], featured: true, popular: true },
-  { name: 'Image Cropper', slug: 'image-cropper', category: 'Image Tools', categorySlug: 'image-tools', description: 'Crop images using numeric coordinates for precise control.', keywords: ['image cropper', 'crop image', 'trim image'], seoTitle: 'Image Cropper Online — Crop Images Free', metaDescription: 'Crop images with precise numeric controls. Free online image cropper — runs in your browser.', introText: 'Upload an image and set X, Y, width, and height values to crop a precise region. Download the cropped result instantly.', exampleInput: 'Upload an image file', exampleOutput: 'Cropped region of your image', faqItems: [{ question: 'How do I set the crop area?', answer: 'Enter pixel values for X, Y, Width, and Height to define the crop rectangle.' }, { question: 'Is the original image modified?', answer: 'No. The original stays untouched. You download a new cropped copy.' }], relatedToolSlugs: ['image-resizer', 'image-rotator', 'image-flipper'], type: 'custom', useCases: ['Profile picture cropping', 'Removing unwanted areas', 'Creating thumbnails'] },
-  { name: 'Image Rotator', slug: 'image-rotator', category: 'Image Tools', categorySlug: 'image-tools', description: 'Rotate images by 90, 180, or 270 degrees.', keywords: ['rotate image', 'image rotator', 'turn image'], seoTitle: 'Image Rotator Online — Rotate Images Free', metaDescription: 'Rotate images by 90, 180, or 270 degrees. Free online image rotator.', introText: 'Upload an image and rotate it by 90°, 180°, or 270° with one click. Preview and download the result.', exampleInput: 'Upload an image file', exampleOutput: 'Rotated image', faqItems: [{ question: 'What rotation angles are supported?', answer: '90°, 180°, and 270° clockwise rotations.' }], relatedToolSlugs: ['image-flipper', 'image-resizer', 'image-cropper'], type: 'custom', useCases: ['Fixing photo orientation', 'Rotating screenshots', 'Adjusting scanned documents'] },
-  { name: 'Image Flipper', slug: 'image-flipper', category: 'Image Tools', categorySlug: 'image-tools', description: 'Flip images horizontally or vertically.', keywords: ['flip image', 'mirror image', 'image flipper'], seoTitle: 'Image Flipper Online — Mirror Images Free', metaDescription: 'Flip images horizontally or vertically. Free online image flipper.', introText: 'Upload an image and flip it horizontally (mirror) or vertically. Preview and download the result instantly.', exampleInput: 'Upload an image file', exampleOutput: 'Flipped image', faqItems: [{ question: 'What is the difference between horizontal and vertical flip?', answer: 'Horizontal flip mirrors left-to-right. Vertical flip mirrors top-to-bottom.' }], relatedToolSlugs: ['image-rotator', 'image-resizer', 'image-cropper'], type: 'custom', useCases: ['Creating mirror selfies', 'Fixing mirrored text', 'Design compositions'] },
-  { name: 'Image to PNG Converter', slug: 'image-to-png', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert any image to PNG format.', keywords: ['image to png', 'convert to png', 'png converter'], seoTitle: 'Image to PNG Converter Online — Convert to PNG Free', metaDescription: 'Convert any image to PNG format instantly. Free online PNG converter.', introText: 'Upload any image and convert it to PNG format. Supports JPG, WebP, GIF, and more.', exampleInput: 'Upload a JPG or WebP image', exampleOutput: 'PNG image file', faqItems: [{ question: 'Why convert to PNG?', answer: 'PNG supports lossless compression and transparency, making it ideal for graphics and web use.' }], relatedToolSlugs: ['image-to-jpg', 'png-to-webp', 'image-compressor'], type: 'custom', useCases: ['Getting transparency support', 'Lossless image saving', 'Web graphics'], featured: true },
-  { name: 'Image to JPG Converter', slug: 'image-to-jpg', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert any image to JPG format with quality control.', keywords: ['image to jpg', 'convert to jpg', 'jpg converter', 'jpeg'], seoTitle: 'Image to JPG Converter Online — Convert to JPG Free', metaDescription: 'Convert any image to JPG format with quality control. Free online JPG converter.', introText: 'Upload any image and convert it to JPG format. Adjust quality to balance file size and image clarity.', exampleInput: 'Upload a PNG or WebP image', exampleOutput: 'JPG image file', faqItems: [{ question: 'Does JPG support transparency?', answer: 'No. Transparent areas are filled with white when converting to JPG.' }, { question: 'What quality should I use?', answer: '80-90% is a good balance. Lower quality reduces file size but may introduce artifacts.' }], relatedToolSlugs: ['image-to-png', 'image-compressor', 'webp-to-png'], type: 'custom', useCases: ['Reducing file size', 'Email attachments', 'Photo sharing'] },
-  { name: 'PNG to WebP Converter', slug: 'png-to-webp', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert PNG images to WebP format for smaller file sizes.', keywords: ['png to webp', 'webp converter', 'convert png'], seoTitle: 'PNG to WebP Converter Online — Convert PNG to WebP Free', metaDescription: 'Convert PNG images to WebP format. Free online converter — 100% client-side.', introText: 'Convert PNG images to the modern WebP format for significantly smaller file sizes with excellent quality.', exampleInput: 'Upload a PNG image', exampleOutput: 'WebP image file', faqItems: [{ question: 'Why convert to WebP?', answer: 'WebP typically produces 25-35% smaller files than PNG with comparable quality.' }, { question: 'Is WebP widely supported?', answer: 'Yes. All modern browsers support WebP.' }], relatedToolSlugs: ['webp-to-png', 'image-to-png', 'image-compressor'], type: 'custom', useCases: ['Web performance optimization', 'Reducing bandwidth', 'Modern image formats'] },
-  { name: 'WebP to PNG Converter', slug: 'webp-to-png', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert WebP images to PNG format.', keywords: ['webp to png', 'convert webp', 'png converter'], seoTitle: 'WebP to PNG Converter Online — Convert WebP to PNG Free', metaDescription: 'Convert WebP images to PNG format. Free online converter.', introText: 'Convert WebP images to the widely compatible PNG format for use in editors and platforms that don\'t support WebP.', exampleInput: 'Upload a WebP image', exampleOutput: 'PNG image file', faqItems: [{ question: 'Why convert WebP to PNG?', answer: 'Some older software and platforms don\'t support WebP. PNG is universally compatible.' }], relatedToolSlugs: ['png-to-webp', 'image-to-png', 'image-to-jpg'], type: 'custom', useCases: ['Compatibility with older software', 'Editing in Photoshop', 'Print-ready images'] },
-  { name: 'Image Compressor', slug: 'image-compressor', category: 'Image Tools', categorySlug: 'image-tools', description: 'Compress images client-side with adjustable quality.', keywords: ['image compressor', 'compress image', 'reduce image size', 'optimize image'], seoTitle: 'Image Compressor Online — Compress Images Free', metaDescription: 'Compress images with adjustable quality. See original vs compressed size. Free online compressor.', introText: 'Compress images by adjusting the quality slider. See the original and compressed file sizes side by side before downloading.', exampleInput: 'Upload an image file', exampleOutput: 'Compressed image with size comparison', faqItems: [{ question: 'How does compression work?', answer: 'The tool re-encodes your image as JPEG at your chosen quality level, reducing file size.' }, { question: 'Will I lose image quality?', answer: 'Some quality loss occurs at lower settings. Use the slider to find the right balance.' }], relatedToolSlugs: ['image-resizer', 'image-to-jpg', 'png-to-webp'], type: 'custom', useCases: ['Email attachments', 'Web optimization', 'Storage saving'], featured: true, popular: true },
-  { name: 'Image Color Picker', slug: 'image-color-picker', category: 'Image Tools', categorySlug: 'image-tools', description: 'Pick colors from any image and get HEX and RGB values.', keywords: ['color picker', 'eyedropper', 'pick color from image', 'hex color'], seoTitle: 'Image Color Picker Online — Pick Colors from Images Free', metaDescription: 'Pick colors from any image. Get HEX and RGB values. Free online color picker.', introText: 'Upload an image and click anywhere to sample colors. Get instant HEX and RGB values with a history of picked colors.', exampleInput: 'Upload an image file', exampleOutput: 'HEX: #FF5733 / RGB: rgb(255, 87, 51)', faqItems: [{ question: 'How do I pick a color?', answer: 'Click anywhere on the uploaded image. The color at that pixel will be sampled.' }, { question: 'Can I copy color values?', answer: 'Yes. Click the copy icon next to any picked color.' }], relatedToolSlugs: ['color-converter', 'image-dimensions-checker', 'image-format-info'], type: 'custom', useCases: ['Design color matching', 'CSS color extraction', 'Brand color identification'], popular: true },
-  { name: 'Image Dimensions Checker', slug: 'image-dimensions-checker', category: 'Image Tools', categorySlug: 'image-tools', description: 'Check image width, height, file size, and aspect ratio.', keywords: ['image dimensions', 'image size', 'check image', 'aspect ratio'], seoTitle: 'Image Dimensions Checker Online — Check Image Size Free', metaDescription: 'Check image width, height, file size, and aspect ratio. Free online dimensions checker.', introText: 'Upload an image to instantly see its width, height, file size, format, aspect ratio, and megapixel count.', exampleInput: 'Upload an image file', exampleOutput: 'Width: 1920 px, Height: 1080 px, Ratio: 16:9', faqItems: [{ question: 'What information is shown?', answer: 'Width, height, file size, format, aspect ratio, and megapixels.' }], relatedToolSlugs: ['image-format-info', 'image-resizer', 'image-color-picker'], type: 'custom', useCases: ['Checking upload requirements', 'Social media size verification', 'Print resolution check'] },
-  { name: 'Image to Base64 Converter', slug: 'image-to-base64', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert images to Base64 encoded strings.', keywords: ['image to base64', 'base64 encode image', 'data uri'], seoTitle: 'Image to Base64 Converter Online — Encode Images Free', metaDescription: 'Convert images to Base64 strings. Free online image encoder.', introText: 'Upload an image and get its Base64 data URI string. Useful for embedding images directly in HTML and CSS.', exampleInput: 'Upload an image file', exampleOutput: 'data:image/png;base64,iVBORw0KGgo...', faqItems: [{ question: 'What is Base64 image encoding?', answer: 'Base64 converts binary image data into a text string that can be embedded directly in HTML or CSS.' }, { question: 'When should I use Base64 images?', answer: 'For small icons and images where reducing HTTP requests is beneficial. Large images should use regular files.' }], relatedToolSlugs: ['base64-to-image', 'base64-encoder', 'image-to-png'], type: 'custom', useCases: ['Embedding images in HTML', 'CSS background images', 'Email templates'] },
-  { name: 'Base64 to Image Converter', slug: 'base64-to-image', category: 'Image Tools', categorySlug: 'image-tools', description: 'Decode Base64 strings back into downloadable images.', keywords: ['base64 to image', 'decode base64 image', 'data uri decoder'], seoTitle: 'Base64 to Image Converter Online — Decode Images Free', metaDescription: 'Decode Base64 strings into viewable and downloadable images. Free online decoder.', introText: 'Paste a Base64 encoded image string and see the decoded image. Download the result as a file.', exampleInput: 'data:image/png;base64,iVBORw0KGgo...', exampleOutput: 'Decoded and viewable image', faqItems: [{ question: 'Do I need the data: prefix?', answer: 'No. The tool auto-detects and adds the prefix if missing.' }], relatedToolSlugs: ['image-to-base64', 'base64-decoder', 'image-to-png'], type: 'custom', useCases: ['Previewing embedded images', 'Debugging data URIs', 'Extracting images from code'] },
-  { name: 'Favicon Generator', slug: 'favicon-generator', category: 'Image Tools', categorySlug: 'image-tools', description: 'Generate favicon-sized PNGs from any image.', keywords: ['favicon generator', 'favicon', 'icon generator', 'site icon'], seoTitle: 'Favicon Generator Online — Create Favicons Free', metaDescription: 'Generate favicons in multiple sizes from any image. Free online favicon generator.', introText: 'Upload a square image and generate favicon-sized outputs (16×16 to 192×192). Download individual sizes for your website.', exampleInput: 'Upload a square image', exampleOutput: 'Favicons at 16, 32, 48, 64, 128, 180, 192 pixels', faqItems: [{ question: 'What size should my source image be?', answer: 'Use a square image at least 192×192 pixels for best results.' }, { question: 'What sizes are generated?', answer: '16×16, 32×32, 48×48, 64×64, 128×128, 180×180, and 192×192.' }], relatedToolSlugs: ['image-resizer', 'image-to-png', 'image-compressor'], type: 'custom', useCases: ['Website favicons', 'PWA icons', 'Browser tab icons'], featured: true },
-  { name: 'Image Format Info Viewer', slug: 'image-format-info', category: 'Image Tools', categorySlug: 'image-tools', description: 'View detailed format information and metadata for any image.', keywords: ['image info', 'image metadata', 'file info', 'format viewer'], seoTitle: 'Image Format Info Viewer Online — View Image Metadata Free', metaDescription: 'View detailed image metadata, format, and dimensions. Free online image info viewer.', introText: 'Upload an image to see its file name, MIME type, dimensions, file size, aspect ratio, megapixels, and last modified date.', exampleInput: 'Upload an image file', exampleOutput: 'Detailed format info table', faqItems: [{ question: 'What information is shown?', answer: 'File name, MIME type, size, dimensions, aspect ratio, megapixels, and last modified date.' }], relatedToolSlugs: ['image-dimensions-checker', 'image-color-picker', 'image-to-base64'], type: 'custom', useCases: ['Checking image specifications', 'Debugging image issues', 'Verifying file formats'] },
+  { name: 'Image Resizer', slug: 'image-resizer', category: 'Image Tools', categorySlug: 'image-tools', description: 'Resize images to custom dimensions with aspect ratio lock.', keywords: ['image resizer', 'resize image', 'scale image', 'dimensions'], seoTitle: 'Image Resizer Online — Resize Images Free', metaDescription: 'Resize images to any dimension with aspect ratio lock. Free online image resizer — 100% client-side.', introText: 'Upload an image, set your target width and height, and download the resized result. Optionally lock the aspect ratio to prevent distortion. All processing happens in your browser — your images never leave your device.', exampleInput: 'Upload an image file', exampleOutput: 'Resized image at your chosen dimensions', faqItems: [{ question: 'Is my image uploaded to a server?', answer: 'No. All processing happens in your browser. Your images never leave your device.' }, { question: 'What formats are supported?', answer: 'PNG, JPG, JPEG, WebP, GIF, and any browser-supported image format.' }, { question: 'Can I preserve the aspect ratio?', answer: 'Yes. Toggle the aspect ratio lock to keep proportions when changing width or height.' }], relatedToolSlugs: ['image-cropper', 'image-compressor', 'image-to-png'], type: 'custom', useCases: ['Social media image sizing', 'Thumbnail creation', 'Web optimization'], featured: true, popular: true, recentlyAdded: true, useCaseTags: ['image-editing'] },
+  { name: 'Image Cropper', slug: 'image-cropper', category: 'Image Tools', categorySlug: 'image-tools', description: 'Crop images using numeric coordinates for precise control.', keywords: ['image cropper', 'crop image', 'trim image'], seoTitle: 'Image Cropper Online — Crop Images Free', metaDescription: 'Crop images with precise numeric controls. Free online image cropper — runs in your browser.', introText: 'Upload an image and set X, Y, width, and height values to crop a precise region. Download the cropped result instantly. No server upload required.', exampleInput: 'Upload an image file', exampleOutput: 'Cropped region of your image', faqItems: [{ question: 'How do I set the crop area?', answer: 'Enter pixel values for X, Y, Width, and Height to define the crop rectangle.' }, { question: 'Is the original image modified?', answer: 'No. The original stays untouched. You download a new cropped copy.' }], relatedToolSlugs: ['image-resizer', 'image-rotator', 'image-flipper'], type: 'custom', useCases: ['Profile picture cropping', 'Removing unwanted areas', 'Creating thumbnails'], recentlyAdded: true, useCaseTags: ['image-editing'] },
+  { name: 'Image Rotator', slug: 'image-rotator', category: 'Image Tools', categorySlug: 'image-tools', description: 'Rotate images by 90, 180, or 270 degrees.', keywords: ['rotate image', 'image rotator', 'turn image'], seoTitle: 'Image Rotator Online — Rotate Images Free', metaDescription: 'Rotate images by 90, 180, or 270 degrees. Free online image rotator.', introText: 'Upload an image and rotate it by 90°, 180°, or 270° with one click. Preview and download the result.', exampleInput: 'Upload an image file', exampleOutput: 'Rotated image', faqItems: [{ question: 'What rotation angles are supported?', answer: '90°, 180°, and 270° clockwise rotations.' }], relatedToolSlugs: ['image-flipper', 'image-resizer', 'image-cropper'], type: 'custom', useCases: ['Fixing photo orientation', 'Rotating screenshots', 'Adjusting scanned documents'], recentlyAdded: true, useCaseTags: ['image-editing'] },
+  { name: 'Image Flipper', slug: 'image-flipper', category: 'Image Tools', categorySlug: 'image-tools', description: 'Flip images horizontally or vertically.', keywords: ['flip image', 'mirror image', 'image flipper'], seoTitle: 'Image Flipper Online — Mirror Images Free', metaDescription: 'Flip images horizontally or vertically. Free online image flipper.', introText: 'Upload an image and flip it horizontally (mirror) or vertically. Preview and download the result instantly.', exampleInput: 'Upload an image file', exampleOutput: 'Flipped image', faqItems: [{ question: 'What is the difference between horizontal and vertical flip?', answer: 'Horizontal flip mirrors left-to-right. Vertical flip mirrors top-to-bottom.' }], relatedToolSlugs: ['image-rotator', 'image-resizer', 'image-cropper'], type: 'custom', useCases: ['Creating mirror selfies', 'Fixing mirrored text', 'Design compositions'], recentlyAdded: true, useCaseTags: ['image-editing'] },
+  { name: 'Image to PNG Converter', slug: 'image-to-png', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert any image to PNG format.', keywords: ['image to png', 'convert to png', 'png converter'], seoTitle: 'Image to PNG Converter Online — Convert to PNG Free', metaDescription: 'Convert any image to PNG format instantly. Free online PNG converter.', introText: 'Upload any image and convert it to PNG format. Supports JPG, WebP, GIF, and more. PNG offers lossless compression and transparency support.', exampleInput: 'Upload a JPG or WebP image', exampleOutput: 'PNG image file', faqItems: [{ question: 'Why convert to PNG?', answer: 'PNG supports lossless compression and transparency, making it ideal for graphics and web use.' }], relatedToolSlugs: ['image-to-jpg', 'png-to-webp', 'image-compressor'], type: 'custom', useCases: ['Getting transparency support', 'Lossless image saving', 'Web graphics'], featured: true, recentlyAdded: true, useCaseTags: ['conversion'] },
+  { name: 'Image to JPG Converter', slug: 'image-to-jpg', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert any image to JPG format with quality control.', keywords: ['image to jpg', 'convert to jpg', 'jpg converter', 'jpeg'], seoTitle: 'Image to JPG Converter Online — Convert to JPG Free', metaDescription: 'Convert any image to JPG format with quality control. Free online JPG converter.', introText: 'Upload any image and convert it to JPG format. Adjust quality to balance file size and image clarity.', exampleInput: 'Upload a PNG or WebP image', exampleOutput: 'JPG image file', faqItems: [{ question: 'Does JPG support transparency?', answer: 'No. Transparent areas are filled with white when converting to JPG.' }, { question: 'What quality should I use?', answer: '80-90% is a good balance. Lower quality reduces file size but may introduce artifacts.' }], relatedToolSlugs: ['image-to-png', 'image-compressor', 'webp-to-png'], type: 'custom', useCases: ['Reducing file size', 'Email attachments', 'Photo sharing'], recentlyAdded: true, useCaseTags: ['conversion'] },
+  { name: 'PNG to WebP Converter', slug: 'png-to-webp', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert PNG images to WebP format for smaller file sizes.', keywords: ['png to webp', 'webp converter', 'convert png'], seoTitle: 'PNG to WebP Converter Online — Convert PNG to WebP Free', metaDescription: 'Convert PNG images to WebP format. Free online converter — 100% client-side.', introText: 'Convert PNG images to the modern WebP format for significantly smaller file sizes with excellent quality.', exampleInput: 'Upload a PNG image', exampleOutput: 'WebP image file', faqItems: [{ question: 'Why convert to WebP?', answer: 'WebP typically produces 25-35% smaller files than PNG with comparable quality.' }, { question: 'Is WebP widely supported?', answer: 'Yes. All modern browsers support WebP.' }], relatedToolSlugs: ['webp-to-png', 'image-to-png', 'image-compressor'], type: 'custom', useCases: ['Web performance optimization', 'Reducing bandwidth', 'Modern image formats'], recentlyAdded: true, useCaseTags: ['conversion', 'compression'] },
+  { name: 'WebP to PNG Converter', slug: 'webp-to-png', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert WebP images to PNG format.', keywords: ['webp to png', 'convert webp', 'png converter'], seoTitle: 'WebP to PNG Converter Online — Convert WebP to PNG Free', metaDescription: 'Convert WebP images to PNG format. Free online converter.', introText: 'Convert WebP images to the widely compatible PNG format for use in editors and platforms that don\'t support WebP.', exampleInput: 'Upload a WebP image', exampleOutput: 'PNG image file', faqItems: [{ question: 'Why convert WebP to PNG?', answer: 'Some older software and platforms don\'t support WebP. PNG is universally compatible.' }], relatedToolSlugs: ['png-to-webp', 'image-to-png', 'image-to-jpg'], type: 'custom', useCases: ['Compatibility with older software', 'Editing in Photoshop', 'Print-ready images'], recentlyAdded: true, useCaseTags: ['conversion'] },
+  { name: 'Image Compressor', slug: 'image-compressor', category: 'Image Tools', categorySlug: 'image-tools', description: 'Compress images client-side with adjustable quality.', keywords: ['image compressor', 'compress image', 'reduce image size', 'optimize image'], seoTitle: 'Image Compressor Online — Compress Images Free', metaDescription: 'Compress images with adjustable quality. See original vs compressed size. Free online compressor.', introText: 'Compress images by adjusting the quality slider. See the original and compressed file sizes side by side before downloading. All compression happens in your browser.', exampleInput: 'Upload an image file', exampleOutput: 'Compressed image with size comparison', faqItems: [{ question: 'How does compression work?', answer: 'The tool re-encodes your image as JPEG at your chosen quality level, reducing file size.' }, { question: 'Will I lose image quality?', answer: 'Some quality loss occurs at lower settings. Use the slider to find the right balance.' }], relatedToolSlugs: ['image-resizer', 'image-to-jpg', 'png-to-webp'], type: 'custom', useCases: ['Email attachments', 'Web optimization', 'Storage saving'], featured: true, popular: true, recentlyAdded: true, useCaseTags: ['compression', 'image-editing'] },
+  { name: 'Image Color Picker', slug: 'image-color-picker', category: 'Image Tools', categorySlug: 'image-tools', description: 'Pick colors from any image and get HEX and RGB values.', keywords: ['color picker', 'eyedropper', 'pick color from image', 'hex color'], seoTitle: 'Image Color Picker Online — Pick Colors from Images Free', metaDescription: 'Pick colors from any image. Get HEX and RGB values. Free online color picker.', introText: 'Upload an image and click anywhere to sample colors. Get instant HEX and RGB values with a history of picked colors. Works great with the Color Converter tool for format conversion.', exampleInput: 'Upload an image file', exampleOutput: 'HEX: #FF5733 / RGB: rgb(255, 87, 51)', faqItems: [{ question: 'How do I pick a color?', answer: 'Click anywhere on the uploaded image. The color at that pixel will be sampled.' }, { question: 'Can I copy color values?', answer: 'Yes. Click the copy icon next to any picked color.' }], relatedToolSlugs: ['color-converter', 'image-dimensions-checker', 'image-format-info'], type: 'custom', useCases: ['Design color matching', 'CSS color extraction', 'Brand color identification'], popular: true, recentlyAdded: true, useCaseTags: ['image-editing', 'productivity'] },
+  { name: 'Image Dimensions Checker', slug: 'image-dimensions-checker', category: 'Image Tools', categorySlug: 'image-tools', description: 'Check image width, height, file size, and aspect ratio.', keywords: ['image dimensions', 'image size', 'check image', 'aspect ratio'], seoTitle: 'Image Dimensions Checker Online — Check Image Size Free', metaDescription: 'Check image width, height, file size, and aspect ratio. Free online dimensions checker.', introText: 'Upload an image to instantly see its width, height, file size, format, aspect ratio, and megapixel count. Essential for verifying upload requirements and social media sizes.', exampleInput: 'Upload an image file', exampleOutput: 'Width: 1920 px, Height: 1080 px, Ratio: 16:9', faqItems: [{ question: 'What information is shown?', answer: 'Width, height, file size, format, aspect ratio, and megapixels.' }], relatedToolSlugs: ['image-format-info', 'image-resizer', 'image-color-picker'], type: 'custom', useCases: ['Checking upload requirements', 'Social media size verification', 'Print resolution check'], recentlyAdded: true, useCaseTags: ['productivity'] },
+  { name: 'Image to Base64 Converter', slug: 'image-to-base64', category: 'Image Tools', categorySlug: 'image-tools', description: 'Convert images to Base64 encoded strings.', keywords: ['image to base64', 'base64 encode image', 'data uri'], seoTitle: 'Image to Base64 Converter Online — Encode Images Free', metaDescription: 'Convert images to Base64 strings. Free online image encoder.', introText: 'Upload an image and get its Base64 data URI string. Useful for embedding images directly in HTML and CSS without extra HTTP requests.', exampleInput: 'Upload an image file', exampleOutput: 'data:image/png;base64,iVBORw0KGgo...', faqItems: [{ question: 'What is Base64 image encoding?', answer: 'Base64 converts binary image data into a text string that can be embedded directly in HTML or CSS.' }, { question: 'When should I use Base64 images?', answer: 'For small icons and images where reducing HTTP requests is beneficial. Large images should use regular files.' }], relatedToolSlugs: ['base64-to-image', 'base64-encoder', 'image-to-png'], type: 'custom', useCases: ['Embedding images in HTML', 'CSS background images', 'Email templates'], recentlyAdded: true, useCaseTags: ['encoding', 'conversion'] },
+  { name: 'Base64 to Image Converter', slug: 'base64-to-image', category: 'Image Tools', categorySlug: 'image-tools', description: 'Decode Base64 strings back into downloadable images.', keywords: ['base64 to image', 'decode base64 image', 'data uri decoder'], seoTitle: 'Base64 to Image Converter Online — Decode Images Free', metaDescription: 'Decode Base64 strings into viewable and downloadable images. Free online decoder.', introText: 'Paste a Base64 encoded image string and see the decoded image. Download the result as a file. Works with both raw Base64 and data URI formats.', exampleInput: 'data:image/png;base64,iVBORw0KGgo...', exampleOutput: 'Decoded and viewable image', faqItems: [{ question: 'Do I need the data: prefix?', answer: 'No. The tool auto-detects and adds the prefix if missing.' }], relatedToolSlugs: ['image-to-base64', 'base64-decoder', 'image-to-png'], type: 'custom', useCases: ['Previewing embedded images', 'Debugging data URIs', 'Extracting images from code'], recentlyAdded: true, useCaseTags: ['decoding', 'conversion'] },
+  { name: 'Favicon Generator', slug: 'favicon-generator', category: 'Image Tools', categorySlug: 'image-tools', description: 'Generate favicon-sized PNGs from any image.', keywords: ['favicon generator', 'favicon', 'icon generator', 'site icon'], seoTitle: 'Favicon Generator Online — Create Favicons Free', metaDescription: 'Generate favicons in multiple sizes from any image. Free online favicon generator.', introText: 'Upload a square image and generate favicon-sized outputs (16×16 to 192×192). Download individual sizes for your website. Perfect for web developers setting up favicons, PWA icons, and browser tab icons.', exampleInput: 'Upload a square image', exampleOutput: 'Favicons at 16, 32, 48, 64, 128, 180, 192 pixels', faqItems: [{ question: 'What size should my source image be?', answer: 'Use a square image at least 192×192 pixels for best results.' }, { question: 'What sizes are generated?', answer: '16×16, 32×32, 48×48, 64×64, 128×128, 180×180, and 192×192.' }], relatedToolSlugs: ['image-resizer', 'image-to-png', 'image-compressor'], type: 'custom', useCases: ['Website favicons', 'PWA icons', 'Browser tab icons'], featured: true, recentlyAdded: true, useCaseTags: ['generators', 'image-editing'] },
+  { name: 'Image Format Info Viewer', slug: 'image-format-info', category: 'Image Tools', categorySlug: 'image-tools', description: 'View detailed format information and metadata for any image.', keywords: ['image info', 'image metadata', 'file info', 'format viewer'], seoTitle: 'Image Format Info Viewer Online — View Image Metadata Free', metaDescription: 'View detailed image metadata, format, and dimensions. Free online image info viewer.', introText: 'Upload an image to see its file name, MIME type, dimensions, file size, aspect ratio, megapixels, and last modified date.', exampleInput: 'Upload an image file', exampleOutput: 'Detailed format info table', faqItems: [{ question: 'What information is shown?', answer: 'File name, MIME type, size, dimensions, aspect ratio, megapixels, and last modified date.' }], relatedToolSlugs: ['image-dimensions-checker', 'image-color-picker', 'image-to-base64'], type: 'custom', useCases: ['Checking image specifications', 'Debugging image issues', 'Verifying file formats'], recentlyAdded: true, useCaseTags: ['debugging', 'productivity'] },
 ];
+
+// ===== HELPER FUNCTIONS =====
 
 export function getToolBySlug(slug: string): ToolConfig | undefined {
   return tools.find(t => t.slug === slug);
@@ -439,13 +503,29 @@ export function getCategoryBySlug(slug: string): CategoryConfig | undefined {
 }
 
 export function searchTools(query: string): ToolConfig[] {
-  const q = query.toLowerCase();
-  return tools.filter(t =>
-    t.name.toLowerCase().includes(q) ||
-    t.description.toLowerCase().includes(q) ||
-    t.keywords.some(k => k.toLowerCase().includes(q)) ||
-    t.category.toLowerCase().includes(q)
-  );
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+
+  // Score-based ranking: exact matches first, then partial
+  const scored = tools.map(t => {
+    let score = 0;
+    const name = t.name.toLowerCase();
+    const desc = t.description.toLowerCase();
+    if (name === q) score += 100;
+    else if (name.startsWith(q)) score += 50;
+    else if (name.includes(q)) score += 30;
+    if (desc.includes(q)) score += 10;
+    if (t.keywords.some(k => k.toLowerCase() === q)) score += 40;
+    else if (t.keywords.some(k => k.toLowerCase().includes(q))) score += 15;
+    if (t.category.toLowerCase().includes(q)) score += 5;
+    if (t.useCaseTags?.some(tag => tag.includes(q))) score += 8;
+    return { tool: t, score };
+  });
+
+  return scored
+    .filter(s => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(s => s.tool);
 }
 
 export function getFeaturedTools(): ToolConfig[] {
@@ -454,4 +534,83 @@ export function getFeaturedTools(): ToolConfig[] {
 
 export function getPopularTools(): ToolConfig[] {
   return tools.filter(t => t.popular);
+}
+
+export function getRecentlyAddedTools(): ToolConfig[] {
+  return tools.filter(t => t.recentlyAdded);
+}
+
+export function getToolsByUseCaseTag(tag: UseCaseTag): ToolConfig[] {
+  return tools.filter(t => t.useCaseTags?.includes(tag));
+}
+
+export function getAllUseCaseTags(): UseCaseTag[] {
+  const tags = new Set<UseCaseTag>();
+  tools.forEach(t => t.useCaseTags?.forEach(tag => tags.add(tag)));
+  return Array.from(tags);
+}
+
+/**
+ * Get related tools for a given tool. Prioritizes manual relatedToolSlugs,
+ * then supplements with same-category, shared-tag, and shared-keyword tools.
+ */
+export function getSmartRelatedTools(currentSlug: string, limit = 6): ToolConfig[] {
+  const current = getToolBySlug(currentSlug);
+  if (!current) return [];
+
+  const seen = new Set<string>([currentSlug]);
+  const result: ToolConfig[] = [];
+
+  // 1. Manual related tools (highest priority)
+  for (const slug of current.relatedToolSlugs) {
+    if (seen.has(slug)) continue;
+    const t = getToolBySlug(slug);
+    if (t) { result.push(t); seen.add(slug); }
+    if (result.length >= limit) return result;
+  }
+
+  // 2. Same use-case tags
+  if (current.useCaseTags) {
+    const tagTools = tools.filter(t =>
+      !seen.has(t.slug) &&
+      t.useCaseTags?.some(tag => current.useCaseTags!.includes(tag))
+    );
+    for (const t of tagTools) {
+      result.push(t); seen.add(t.slug);
+      if (result.length >= limit) return result;
+    }
+  }
+
+  // 3. Same category
+  const catTools = tools.filter(t => !seen.has(t.slug) && t.categorySlug === current.categorySlug);
+  for (const t of catTools) {
+    result.push(t); seen.add(t.slug);
+    if (result.length >= limit) return result;
+  }
+
+  // 4. Shared keywords (cross-category)
+  const kwSet = new Set(current.keywords.map(k => k.toLowerCase()));
+  const kwTools = tools.filter(t =>
+    !seen.has(t.slug) &&
+    t.keywords.some(k => kwSet.has(k.toLowerCase()))
+  );
+  for (const t of kwTools) {
+    result.push(t); seen.add(t.slug);
+    if (result.length >= limit) return result;
+  }
+
+  return result;
+}
+
+/**
+ * Get "More tools like this" — tools sharing use-case tags but different from related tools
+ */
+export function getMoreToolsLikeThis(currentSlug: string, relatedSlugs: string[], limit = 4): ToolConfig[] {
+  const current = getToolBySlug(currentSlug);
+  if (!current?.useCaseTags?.length) return [];
+
+  const excluded = new Set([currentSlug, ...relatedSlugs]);
+  return tools
+    .filter(t => !excluded.has(t.slug) && t.useCaseTags?.some(tag => current.useCaseTags!.includes(tag)))
+    .slice(0, limit);
 }
