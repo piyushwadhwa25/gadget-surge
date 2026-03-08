@@ -62,7 +62,7 @@ export default function Index() {
           {[
             { icon: Code2, title: 'Developer Tools', desc: `${devTools.length} tools to format, encode, decode, and convert data.` },
             { icon: Type, title: 'Text Tools', desc: `${textTools.length} tools to count, convert, sort, and generate text.` },
-            { icon: Globe, title: 'Always Free', desc: 'Every tool is free. No signup, no ads-wall — just open and go.' },
+            { icon: ImageIcon, title: 'Image Tools', desc: `${imageTools.length} tools to resize, convert, compress, and inspect images.` },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="text-center p-6 rounded-xl border border-border bg-card">
               <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
