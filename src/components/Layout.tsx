@@ -11,7 +11,7 @@ const navItems = [
   { label: 'Home', path: '/' },
   { label: 'Developer Tools', path: '/category/developer-tools' },
   { label: 'Text Tools', path: '/category/text-tools' },
-  { label: 'Image Tools', path: '/category/image-tools', comingSoon: true },
+  { label: 'Image Tools', path: '/category/image-tools' },
   { label: 'Document Tools', path: '/category/document-tools', comingSoon: true },
   { label: 'All Tools', path: '/tools' },
 ];

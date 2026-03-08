@@ -114,6 +114,19 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Image Tools */}
+      <section className="container mx-auto px-4 pb-14">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-foreground">Image Tools</h2>
+          <Link to="/category/image-tools" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+            See all {imageTools.length} <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {imageTools.slice(0, 6).map(tool => <ToolCard key={tool.slug} tool={tool} />)}
+        </div>
+      </section>
+
       {/* Popular Tools */}
       {popular.length > 0 && (
         <section className="container mx-auto px-4 pb-14">
