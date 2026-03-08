@@ -15,6 +15,22 @@ import { LoremIpsumTool } from '@/pages/tools/LoremIpsumTool';
 import { PasswordGeneratorTool } from '@/pages/tools/PasswordGeneratorTool';
 import { UsernameGeneratorTool } from '@/pages/tools/UsernameGeneratorTool';
 import { TextToListTool } from '@/pages/tools/TextToListTool';
+// Image tools
+import { ImageResizerTool } from '@/pages/tools/ImageResizerTool';
+import { ImageCropperTool } from '@/pages/tools/ImageCropperTool';
+import { ImageRotatorTool } from '@/pages/tools/ImageRotatorTool';
+import { ImageFlipperTool } from '@/pages/tools/ImageFlipperTool';
+import { ImageToPngTool } from '@/pages/tools/ImageToPngTool';
+import { ImageToJpgTool } from '@/pages/tools/ImageToJpgTool';
+import { PngToWebpTool } from '@/pages/tools/PngToWebpTool';
+import { WebpToPngTool } from '@/pages/tools/WebpToPngTool';
+import { ImageCompressorTool } from '@/pages/tools/ImageCompressorTool';
+import { ImageColorPickerTool } from '@/pages/tools/ImageColorPickerTool';
+import { ImageDimensionsTool } from '@/pages/tools/ImageDimensionsTool';
+import { ImageToBase64Tool } from '@/pages/tools/ImageToBase64Tool';
+import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
+import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
+import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
 
 const customToolComponents: Record<string, React.ComponentType<{ tool: any }>> = {
   'regex-tester': RegexTesterTool,
@@ -28,6 +44,22 @@ const customToolComponents: Record<string, React.ComponentType<{ tool: any }>> =
   'random-password-generator': PasswordGeneratorTool,
   'random-username-generator': UsernameGeneratorTool,
   'text-to-list': TextToListTool,
+  // Image tools
+  'image-resizer': ImageResizerTool,
+  'image-cropper': ImageCropperTool,
+  'image-rotator': ImageRotatorTool,
+  'image-flipper': ImageFlipperTool,
+  'image-to-png': ImageToPngTool,
+  'image-to-jpg': ImageToJpgTool,
+  'png-to-webp': PngToWebpTool,
+  'webp-to-png': WebpToPngTool,
+  'image-compressor': ImageCompressorTool,
+  'image-color-picker': ImageColorPickerTool,
+  'image-dimensions-checker': ImageDimensionsTool,
+  'image-to-base64': ImageToBase64Tool,
+  'base64-to-image': Base64ToImageTool,
+  'favicon-generator': FaviconGeneratorTool,
+  'image-format-info': ImageFormatInfoTool,
 };
 
 export default function ToolPage() {

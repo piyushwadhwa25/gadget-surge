@@ -4,7 +4,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { ToolCard } from '@/components/ToolCard';
 import { JsonLd } from '@/components/JsonLd';
 import { getFeaturedTools, getPopularTools, getToolsByCategory, tools, categories } from '@/lib/tools-registry';
-import { Zap, ArrowRight, Code2, Type, Globe } from 'lucide-react';
+import { Zap, ArrowRight, Code2, Type, Globe, ImageIcon } from 'lucide-react';
 
 export default function Index() {
   usePageMeta({
@@ -19,6 +19,7 @@ export default function Index() {
   const popular = getPopularTools();
   const devTools = getToolsByCategory('developer-tools');
   const textTools = getToolsByCategory('text-tools');
+  const imageTools = getToolsByCategory('image-tools');
 
   const websiteLd = {
     '@context': 'https://schema.org',
@@ -61,7 +62,7 @@ export default function Index() {
           {[
             { icon: Code2, title: 'Developer Tools', desc: `${devTools.length} tools to format, encode, decode, and convert data.` },
             { icon: Type, title: 'Text Tools', desc: `${textTools.length} tools to count, convert, sort, and generate text.` },
-            { icon: Globe, title: 'Always Free', desc: 'Every tool is free. No signup, no ads-wall — just open and go.' },
+            { icon: ImageIcon, title: 'Image Tools', desc: `${imageTools.length} tools to resize, convert, compress, and inspect images.` },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="text-center p-6 rounded-xl border border-border bg-card">
               <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
@@ -110,6 +111,19 @@ export default function Index() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {textTools.slice(0, 6).map(tool => <ToolCard key={tool.slug} tool={tool} />)}
+        </div>
+      </section>
+
+      {/* Image Tools */}
+      <section className="container mx-auto px-4 pb-14">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-foreground">Image Tools</h2>
+          <Link to="/category/image-tools" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">
+            See all {imageTools.length} <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {imageTools.slice(0, 6).map(tool => <ToolCard key={tool.slug} tool={tool} />)}
         </div>
       </section>
 
