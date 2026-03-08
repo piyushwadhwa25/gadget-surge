@@ -10,8 +10,8 @@ import { categories } from '@/lib/tools-registry';
 const navItems = [
   { label: 'Home', path: '/' },
   { label: 'Developer Tools', path: '/category/developer-tools' },
+  { label: 'Text Tools', path: '/category/text-tools' },
   { label: 'Image Tools', path: '/category/image-tools', comingSoon: true },
-  { label: 'Text Tools', path: '/category/text-tools', comingSoon: true },
   { label: 'Document Tools', path: '/category/document-tools', comingSoon: true },
   { label: 'All Tools', path: '/tools' },
 ];

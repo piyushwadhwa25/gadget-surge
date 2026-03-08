@@ -269,6 +269,9 @@ export function testRegex(pattern: string, flags: string, text: string): { match
   return { matches: results, count: results.length };
 }
 
+// Re-export text tool processors
+import { textToolProcessors } from './text-tools';
+
 // Process function map for standard tools
 export const toolProcessors: Record<string, (input: string) => string> = {
   'json-formatter': formatJson,
@@ -282,4 +285,5 @@ export const toolProcessors: Record<string, (input: string) => string> = {
   'markdown-to-html': markdownToHtml,
   'html-formatter': formatHtml,
   'sql-formatter': formatSql,
+  ...textToolProcessors,
 };
