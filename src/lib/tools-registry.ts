@@ -42,8 +42,7 @@ export const categories: CategoryConfig[] = [
     name: 'Image Tools',
     slug: 'image-tools',
     description: 'Tools for image conversion, resizing, and optimization.',
-    introText: 'Image manipulation tools coming soon.',
-    comingSoon: true,
+    introText: 'A collection of free browser-based image tools. Resize, crop, convert, compress, and inspect images — all processing happens entirely in your browser for complete privacy.',
   },
   {
     name: 'Text Tools',
