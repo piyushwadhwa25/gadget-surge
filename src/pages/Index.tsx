@@ -4,7 +4,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { ToolCard } from '@/components/ToolCard';
 import { JsonLd } from '@/components/JsonLd';
 import { getFeaturedTools, getPopularTools, getToolsByCategory, tools, categories } from '@/lib/tools-registry';
-import { Zap, ArrowRight, Code2, Type, Globe } from 'lucide-react';
+import { Zap, ArrowRight, Code2, Type, Globe, ImageIcon } from 'lucide-react';
 
 export default function Index() {
   usePageMeta({
