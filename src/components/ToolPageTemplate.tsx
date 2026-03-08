@@ -1,11 +1,13 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import type { ToolConfig } from '@/lib/tools-registry';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { SeoSection } from '@/components/SeoSection';
 import { RelatedTools } from '@/components/RelatedTools';
+import { CategoryPopular } from '@/components/CategoryPopular';
 import { AdPlaceholder } from '@/components/AdPlaceholder';
 import { JsonLd } from '@/components/JsonLd';
+import { trackEvent } from '@/lib/analytics';
 
 interface ToolPageTemplateProps {
   tool: ToolConfig;
@@ -19,7 +21,16 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
     title: tool.seoTitle,
     description: tool.metaDescription,
     canonical: canonicalUrl,
+    ogTitle: tool.seoTitle,
+    ogDescription: tool.metaDescription,
+    ogType: 'website',
+    ogUrl: canonicalUrl,
+    twitterCard: 'summary',
   });
+
+  useEffect(() => {
+    trackEvent({ type: 'tool_viewed', slug: tool.slug });
+  }, [tool.slug]);
 
   const breadcrumbLd = {
     '@context': 'https://schema.org',
@@ -66,7 +77,7 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
       />
 
       <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{tool.name}</h1>
-      <p className="text-muted-foreground mb-6">{tool.description}</p>
+      <p className="text-muted-foreground mb-6 max-w-prose">{tool.description}</p>
 
       {/* Tool Interface */}
       {children}
@@ -80,7 +91,10 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
       <SeoSection tool={tool} />
 
       {/* Related Tools */}
-      <RelatedTools slugs={tool.relatedToolSlugs} />
+      <RelatedTools slugs={tool.relatedToolSlugs} currentSlug={tool.slug} />
+
+      {/* Popular in this category */}
+      <CategoryPopular categorySlug={tool.categorySlug} currentSlug={tool.slug} />
     </div>
   );
 }

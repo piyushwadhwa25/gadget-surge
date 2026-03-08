@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Copy, Download, Trash2, FileText, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/analytics';
 
 interface ToolInterfaceProps {
   slug: string;
@@ -32,7 +33,8 @@ export function ToolInterface({
     if (!outputValue) return;
     await navigator.clipboard.writeText(outputValue);
     toast.success('Copied to clipboard');
-  }, [outputValue]);
+    trackEvent({ type: 'copy_result', slug });
+  }, [outputValue, slug]);
 
   const handleDownload = useCallback(() => {
     if (!outputValue) return;
@@ -43,23 +45,32 @@ export function ToolInterface({
     a.download = `${slug}-output.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Downloaded');
+    toast.success('File downloaded');
+    trackEvent({ type: 'download_result', slug });
   }, [outputValue, slug]);
 
   const handleClear = useCallback(() => {
     onInputChange('');
-  }, [onInputChange]);
+    trackEvent({ type: 'clear_input', slug });
+  }, [onInputChange, slug]);
 
   const handleLoadExample = useCallback(() => {
     onInputChange(exampleInput);
-  }, [onInputChange, exampleInput]);
+    trackEvent({ type: 'load_example', slug });
+  }, [onInputChange, exampleInput, slug]);
 
   const handleShareLink = useCallback(async () => {
     const encoded = encodeURIComponent(inputValue);
     const url = `${window.location.origin}/tools/${slug}?data=${encoded}`;
     await navigator.clipboard.writeText(url);
     toast.success('Share link copied to clipboard');
+    trackEvent({ type: 'copy_share_link', slug });
   }, [inputValue, slug]);
+
+  const handleProcess = useCallback(() => {
+    onProcess();
+    trackEvent({ type: 'tool_action_run', slug, action: actionLabel });
+  }, [onProcess, slug, actionLabel]);
 
   return (
     <div className="space-y-4">
@@ -67,13 +78,14 @@ export function ToolInterface({
       <div className="flex flex-wrap gap-2">
         <button
           onClick={handleLoadExample}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <FileText className="h-3.5 w-3.5" /> Load Example
         </button>
         <button
           onClick={handleClear}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          disabled={!inputValue}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Trash2 className="h-3.5 w-3.5" /> Clear
         </button>
@@ -93,8 +105,9 @@ export function ToolInterface({
 
       {/* Process button */}
       <button
-        onClick={onProcess}
-        className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
+        onClick={handleProcess}
+        disabled={!inputValue}
+        className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         {actionLabel}
       </button>
@@ -102,7 +115,7 @@ export function ToolInterface({
       {/* Error */}
       {error && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
-          {error}
+          ⚠ {error}
         </div>
       )}
 
@@ -114,21 +127,21 @@ export function ToolInterface({
             <button
               onClick={handleCopy}
               disabled={!outputValue}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Copy className="h-3 w-3" /> Copy
             </button>
             <button
               onClick={handleDownload}
               disabled={!outputValue}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Download className="h-3 w-3" /> Download
             </button>
             <button
               onClick={handleShareLink}
               disabled={!inputValue}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Share2 className="h-3 w-3" /> Share
             </button>

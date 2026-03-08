@@ -10,11 +10,16 @@ export function ToolCard({ tool }: ToolCardProps) {
   return (
     <Link
       to={`/tools/${tool.slug}`}
-      className="group block rounded-lg border border-border bg-card p-5 transition-all hover:border-primary/50 hover:shadow-md hover:shadow-primary/5"
+      className="group block rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <h3 className="text-base font-semibold text-card-foreground group-hover:text-primary transition-colors">
-        {tool.name}
-      </h3>
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-base font-semibold text-card-foreground group-hover:text-primary transition-colors">
+          {tool.name}
+        </h3>
+        {tool.popular && (
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent">Popular</span>
+        )}
+      </div>
       <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
         {tool.description}
       </p>
