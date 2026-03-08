@@ -48,9 +48,8 @@ export const categories: CategoryConfig[] = [
   {
     name: 'Text Tools',
     slug: 'text-tools',
-    description: 'Tools for text manipulation and formatting.',
-    introText: 'Text tools coming soon.',
-    comingSoon: true,
+    description: 'Tools for text manipulation, formatting, counting, and generation.',
+    introText: 'A collection of free browser-based text utilities. Count words, convert case, generate passwords, clean up text, and more — all running entirely in your browser with no data sent to any server.',
   },
   {
     name: 'Document Tools',
