@@ -8,6 +8,27 @@ import { RegexTesterTool } from '@/pages/tools/RegexTesterTool';
 import { UuidGeneratorTool } from '@/pages/tools/UuidGeneratorTool';
 import { TimestampConverterTool } from '@/pages/tools/TimestampConverterTool';
 import { ColorConverterTool } from '@/pages/tools/ColorConverterTool';
+import { CaseConverterTool } from '@/pages/tools/CaseConverterTool';
+import { TextSorterTool } from '@/pages/tools/TextSorterTool';
+import { ReverseTextTool } from '@/pages/tools/ReverseTextTool';
+import { LoremIpsumTool } from '@/pages/tools/LoremIpsumTool';
+import { PasswordGeneratorTool } from '@/pages/tools/PasswordGeneratorTool';
+import { UsernameGeneratorTool } from '@/pages/tools/UsernameGeneratorTool';
+import { TextToListTool } from '@/pages/tools/TextToListTool';
+
+const customToolComponents: Record<string, React.ComponentType<{ tool: any }>> = {
+  'regex-tester': RegexTesterTool,
+  'uuid-generator': UuidGeneratorTool,
+  'timestamp-converter': TimestampConverterTool,
+  'color-converter': ColorConverterTool,
+  'case-converter': CaseConverterTool,
+  'text-sorter': TextSorterTool,
+  'reverse-text': ReverseTextTool,
+  'lorem-ipsum-generator': LoremIpsumTool,
+  'random-password-generator': PasswordGeneratorTool,
+  'random-username-generator': UsernameGeneratorTool,
+  'text-to-list': TextToListTool,
+};
 
 export default function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -18,15 +39,10 @@ export default function ToolPage() {
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
 
-  // Load from ?data= query param
   useEffect(() => {
     const data = searchParams.get('data');
     if (data) {
-      try {
-        setInput(decodeURIComponent(data));
-      } catch {
-        setInput(data);
-      }
+      try { setInput(decodeURIComponent(data)); } catch { setInput(data); }
     }
   }, [searchParams]);
 
@@ -42,7 +58,6 @@ export default function ToolPage() {
     }
   }, [input, slug]);
 
-  // Reset state when slug changes
   useEffect(() => {
     setInput('');
     setOutput('');
@@ -64,12 +79,10 @@ export default function ToolPage() {
 
   // Custom tool rendering
   if (tool.type === 'custom') {
+    const CustomComponent = slug ? customToolComponents[slug] : undefined;
     return (
       <ToolPageTemplate tool={tool}>
-        {slug === 'regex-tester' && <RegexTesterTool tool={tool} />}
-        {slug === 'uuid-generator' && <UuidGeneratorTool tool={tool} />}
-        {slug === 'timestamp-converter' && <TimestampConverterTool tool={tool} />}
-        {slug === 'color-converter' && <ColorConverterTool tool={tool} />}
+        {CustomComponent ? <CustomComponent tool={tool} /> : null}
       </ToolPageTemplate>
     );
   }
@@ -104,6 +117,14 @@ function getActionLabel(slug: string): string {
     'markdown-to-html': 'Convert to HTML',
     'html-formatter': 'Format HTML',
     'sql-formatter': 'Format SQL',
+    'word-counter': 'Count Words',
+    'character-counter': 'Count Characters',
+    'sentence-counter': 'Count Sentences',
+    'paragraph-counter': 'Count Paragraphs',
+    'remove-extra-spaces': 'Remove Spaces',
+    'remove-line-breaks': 'Remove Line Breaks',
+    'duplicate-line-remover': 'Remove Duplicates',
+    'slug-generator': 'Generate Slug',
   };
   return labels[slug] || 'Process';
 }
