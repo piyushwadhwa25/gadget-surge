@@ -19,6 +19,7 @@ export default function Index() {
   const popular = getPopularTools();
   const devTools = getToolsByCategory('developer-tools');
   const textTools = getToolsByCategory('text-tools');
+  const imageTools = getToolsByCategory('image-tools');
 
   const websiteLd = {
     '@context': 'https://schema.org',
