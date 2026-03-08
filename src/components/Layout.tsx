@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { trackPageView } from '@/lib/analytics';
 import { Sun, Moon, Menu, X, Zap } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { SearchBar } from '@/components/SearchBar';
