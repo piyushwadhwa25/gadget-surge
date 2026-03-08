@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { trackPageView } from '@/lib/analytics';
 import { Sun, Moon, Menu, X, Zap } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { SearchBar } from '@/components/SearchBar';
@@ -19,6 +20,11 @@ export function Layout() {
   const { isDark, toggle } = useDarkMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  // Track SPA page views on route change
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
