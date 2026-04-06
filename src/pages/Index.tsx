@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { usePageMeta } from '@/hooks/usePageMeta';
+import { Helmet } from 'react-helmet-async';
 import { SearchBar } from '@/components/SearchBar';
 import { ToolCard } from '@/components/ToolCard';
 import { JsonLd } from '@/components/JsonLd';
@@ -11,14 +11,6 @@ import {
 import { Zap, ArrowRight, Code2, Type, ImageIcon, Shield, Globe, Sparkles } from 'lucide-react';
 
 export default function Index() {
-  usePageMeta({
-    title: 'GadgetSurge — Free Online Tools for Developers, Creators & Everyday Tasks',
-    description: `${tools.length} free browser-based utilities. JSON formatter, image resizer, word counter, password generator, and more. No signup, no data collection — 100% client-side.`,
-    canonical: 'https://gadgetsurge.com/',
-    ogTitle: 'GadgetSurge — Free Online Tools',
-    ogDescription: 'Free browser-based utilities for developers, creators, and everyday tasks.',
-  });
-
   const featured = getFeaturedTools();
   const popular = getPopularTools();
   const recent = getRecentlyAddedTools();
@@ -42,6 +34,16 @@ export default function Index() {
 
   return (
     <div>
+      <Helmet>
+        <title>GadgetSurge — Free Online Tools for Developers, Creators &amp; Everyday Tasks</title>
+        <meta name="description" content="A growing collection of free browser-based utilities. JSON formatter, Base64 encoder, regex tester, UUID generator, image tools, and more. No signup required." />
+        <link rel="canonical" href="https://www.gadgetsurge.com/" />
+        <meta property="og:title" content="GadgetSurge — Free Online Tools for Developers, Creators &amp; Everyday Tasks" />
+        <meta property="og:description" content="A growing collection of free browser-based utilities. JSON formatter, Base64 encoder, regex tester, UUID generator, image tools, and more. No signup required." />
+        <meta property="og:url" content="https://www.gadgetsurge.com/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="GadgetSurge" />
+      </Helmet>
       <JsonLd data={websiteLd} />
 
       {/* Hero */}

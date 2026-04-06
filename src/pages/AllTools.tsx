@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { usePageMeta } from '@/hooks/usePageMeta';
+import { Helmet } from 'react-helmet-async';
 import { ToolCard } from '@/components/ToolCard';
 import { SearchBar } from '@/components/SearchBar';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -14,12 +14,6 @@ export default function AllTools() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCategory = searchParams.get('category') || '';
   const activeUseCase = (searchParams.get('useCase') || '') as UseCaseTag;
-
-  usePageMeta({
-    title: 'All Free Online Tools — GadgetSurge',
-    description: `Browse all ${tools.length} free browser-based tools on GadgetSurge. Developer tools, text tools, image tools, converters, formatters, generators, and more.`,
-    canonical: 'https://gadgetsurge.com/tools',
-  });
 
   const featured = getFeaturedTools();
   const popular = getPopularTools();
@@ -41,6 +35,16 @@ export default function AllTools() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <Helmet>
+        <title>All Free Online Tools — GadgetSurge</title>
+        <meta name="description" content="Browse all free online tools at GadgetSurge. Developer utilities, text tools, image converters, and everyday calculators. No signup, no login, runs in your browser." />
+        <link rel="canonical" href="https://www.gadgetsurge.com/tools" />
+        <meta property="og:title" content="All Free Online Tools — GadgetSurge" />
+        <meta property="og:description" content="Browse all free online tools at GadgetSurge. Developer utilities, text tools, image converters, and everyday calculators. No signup, no login, runs in your browser." />
+        <meta property="og:url" content="https://www.gadgetsurge.com/tools" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="GadgetSurge" />
+      </Helmet>
       <Breadcrumbs items={[{ label: 'All Tools' }]} />
 
       <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">All Free Online Tools</h1>

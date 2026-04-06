@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { getToolBySlug } from '@/lib/tools-registry';
+import { toolSeoFallbackMeta, toolSeoMetaMap } from '@/lib/toolSeoMetaMap';
 import { toolProcessors } from '@/utils/tool-logic';
 import { ToolPageTemplate } from '@/components/ToolPageTemplate';
 import { ToolInterface } from '@/components/ToolInterface';
@@ -100,9 +102,22 @@ export default function ToolPage() {
     }
   }, [slug]);
 
+  const meta = toolSeoMetaMap[slug ?? ""] ?? toolSeoFallbackMeta;
+  const canonical = `https://www.gadgetsurge.com/tools/${slug}`;
+
   if (!tool) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
+        <Helmet>
+          <title>{meta.title}</title>
+          <meta name="description" content={meta.description} />
+          <link rel="canonical" href={canonical} />
+          <meta property="og:title" content={meta.title} />
+          <meta property="og:description" content={meta.description} />
+          <meta property="og:url" content={canonical} />
+          <meta property="og:type" content="website" />
+          <meta property="og:site_name" content="GadgetSurge" />
+        </Helmet>
         <h1 className="text-2xl font-bold text-foreground mb-2">Tool Not Found</h1>
         <p className="text-muted-foreground">The tool you're looking for doesn't exist.</p>
       </div>
@@ -113,26 +128,50 @@ export default function ToolPage() {
   if (tool.type === 'custom') {
     const CustomComponent = slug ? customToolComponents[slug] : undefined;
     return (
-      <ToolPageTemplate tool={tool}>
-        {CustomComponent ? <CustomComponent tool={tool} /> : null}
-      </ToolPageTemplate>
+      <>
+        <Helmet>
+          <title>{meta.title}</title>
+          <meta name="description" content={meta.description} />
+          <link rel="canonical" href={canonical} />
+          <meta property="og:title" content={meta.title} />
+          <meta property="og:description" content={meta.description} />
+          <meta property="og:url" content={canonical} />
+          <meta property="og:type" content="website" />
+          <meta property="og:site_name" content="GadgetSurge" />
+        </Helmet>
+        <ToolPageTemplate tool={tool}>
+          {CustomComponent ? <CustomComponent tool={tool} /> : null}
+        </ToolPageTemplate>
+      </>
     );
   }
 
   // Standard tool rendering
   return (
-    <ToolPageTemplate tool={tool}>
-      <ToolInterface
-        slug={tool.slug}
-        inputValue={input}
-        onInputChange={setInput}
-        outputValue={output}
-        error={error}
-        onProcess={handleProcess}
-        actionLabel={getActionLabel(tool.slug)}
-        exampleInput={tool.exampleInput}
-      />
-    </ToolPageTemplate>
+    <>
+      <Helmet>
+        <title>{meta.title}</title>
+        <meta name="description" content={meta.description} />
+        <link rel="canonical" href={canonical} />
+        <meta property="og:title" content={meta.title} />
+        <meta property="og:description" content={meta.description} />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="GadgetSurge" />
+      </Helmet>
+      <ToolPageTemplate tool={tool}>
+        <ToolInterface
+          slug={tool.slug}
+          inputValue={input}
+          onInputChange={setInput}
+          outputValue={output}
+          error={error}
+          onProcess={handleProcess}
+          actionLabel={getActionLabel(tool.slug)}
+          exampleInput={tool.exampleInput}
+        />
+      </ToolPageTemplate>
+    </>
   );
 }
 

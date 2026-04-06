@@ -1,16 +1,99 @@
+# ============================================================
+# robots.txt — GadgetSurge
+# Last updated: April 2026
+# ============================================================
+
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
-User-agent: Twitterbot
+User-agent: Slurp
 Allow: /
 
-User-agent: facebookexternalhit
+User-agent: DuckDuckBot
 Allow: /
 
+# OpenAI
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: claude-web
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google AI
+User-agent: Google-Extended
+Allow: /
+
+# Apple
+User-agent: applebot
+Allow: /
+
+User-agent: applebot-extended
+Allow: /
+
+# Meta
+User-agent: FacebookBot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+# Amazon
+User-agent: Amazonbot
+Allow: /
+
+# Block abusive scrapers
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Fallback
 User-agent: *
 Allow: /
 
-Sitemap: https://gadgetsurge.com/sitemap.xml
+Sitemap: https://www.gadgetsurge.com/sitemap.xml

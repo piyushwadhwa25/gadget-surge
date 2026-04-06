@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { usePageMeta } from '@/hooks/usePageMeta';
+import { Helmet } from 'react-helmet-async';
 import { ToolCard } from '@/components/ToolCard';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { JsonLd } from '@/components/JsonLd';
@@ -9,22 +9,55 @@ import { Clock, ArrowRight } from 'lucide-react';
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
+
+  const categoryMeta: Record<string, { title: string; description: string }> = {
+    "developer-tools": {
+      title: "Free Developer Tools Online — JSON, Base64, UUID, Regex & More | GadgetSurge",
+      description: "Free online developer tools including JSON formatter, Base64 encoder/decoder, UUID generator, regex tester, JWT decoder, timestamp converter, and more.",
+    },
+    "image-tools": {
+      title: "Free Online Image Tools — Resize, Convert, Compress & More | GadgetSurge",
+      description: "Free browser-based image tools. Resize, crop, rotate, compress, and convert images between formats (PNG, JPG, WebP). No upload to server — runs in your browser.",
+    },
+    "text-tools": {
+      title: "Free Online Text Tools — Word Counter, Case Converter & More | GadgetSurge",
+      description: "Free text utilities including word counter, character counter, case converter, duplicate line remover, text sorter, lorem ipsum generator, and more.",
+    },
+    "document-tools": {
+      title: "Free Online Document Tools — Markdown, HTML, SQL | GadgetSurge",
+      description: "Free document conversion and formatting tools. Convert Markdown to HTML, format SQL queries, format HTML, and more. All tools run in your browser.",
+    },
+    "calculators": {
+      title: "Free Online Calculators — GadgetSurge",
+      description: "Free online calculators for everyday tasks. All calculators run directly in your browser with no signup required.",
+    },
+  };
+
+  const meta = categoryMeta[slug ?? ""] ?? {
+    title: "GadgetSurge — Free Online Tools",
+    description: "Free browser-based utilities for developers, creators, and everyday tasks.",
+  };
+
+  const canonical = `https://www.gadgetsurge.com/category/${slug}`;
+
   const category = slug ? getCategoryBySlug(slug) : undefined;
   const categoryTools = slug ? getToolsByCategory(slug) : [];
 
-  const canonicalUrl = `https://gadgetsurge.com/category/${slug}`;
-
-  usePageMeta({
-    title: category ? `${category.name} — Free Online ${category.name} | GadgetSurge` : 'Category — GadgetSurge',
-    description: category?.description || 'Browse tools on GadgetSurge.',
-    canonical: canonicalUrl,
-    ogTitle: category ? `${category.name} — GadgetSurge` : undefined,
-    ogDescription: category?.description,
-  });
+  const canonicalUrl = canonical;
 
   if (!category) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
+        <Helmet>
+          <title>{meta.title}</title>
+          <meta name="description" content={meta.description} />
+          <link rel="canonical" href={canonical} />
+          <meta property="og:title" content={meta.title} />
+          <meta property="og:description" content={meta.description} />
+          <meta property="og:url" content={canonical} />
+          <meta property="og:type" content="website" />
+          <meta property="og:site_name" content="GadgetSurge" />
+        </Helmet>
         <h1 className="text-2xl font-bold text-foreground mb-2">Category Not Found</h1>
         <p className="text-muted-foreground">This category doesn't exist.</p>
         <Link to="/tools" className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
@@ -38,7 +71,7 @@ export default function CategoryPage() {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://gadgetsurge.com/' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.gadgetsurge.com/' },
       { '@type': 'ListItem', position: 2, name: category.name, item: canonicalUrl },
     ],
   };
@@ -50,6 +83,16 @@ export default function CategoryPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <Helmet>
+        <title>{meta.title}</title>
+        <meta name="description" content={meta.description} />
+        <link rel="canonical" href={canonical} />
+        <meta property="og:title" content={meta.title} />
+        <meta property="og:description" content={meta.description} />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="GadgetSurge" />
+      </Helmet>
       <JsonLd data={breadcrumbLd} />
       <Breadcrumbs items={[{ label: category.name }]} />
 

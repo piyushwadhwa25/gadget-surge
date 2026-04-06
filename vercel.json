@@ -58,6 +58,14 @@
   ],
   "rewrites": [
     {
+      "source": "/tools/:slug",
+      "destination": "/tools/:slug/index.html"
+    },
+    {
+      "source": "/category/:slug",
+      "destination": "/category/:slug/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
