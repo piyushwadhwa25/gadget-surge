@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import type { ToolConfig } from '@/lib/tools-registry';
+import { toolContentMap } from '@/lib/toolContentMap';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { SeoSection } from '@/components/SeoSection';
@@ -42,31 +43,23 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
     ],
   };
 
-  const webAppLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: tool.name,
-    url: canonicalUrl,
-    description: tool.metaDescription,
-    applicationCategory: 'UtilitiesApplication',
-    operatingSystem: 'Any',
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  };
-
-  const faqLd = tool.faqItems.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: tool.faqItems.map(faq => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-    })),
-  } : null;
+  const expandedContent = toolContentMap[tool.slug];
+  const faqLd =
+    !expandedContent?.faqs?.length && tool.faqItems.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: tool.faqItems.map(faq => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+          })),
+        }
+      : null;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <JsonLd data={breadcrumbLd} />
-      <JsonLd data={webAppLd} />
       {faqLd && <JsonLd data={faqLd} />}
 
       <Breadcrumbs
@@ -88,7 +81,7 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
       </div>
 
       {/* SEO Content */}
-      <SeoSection tool={tool} />
+      <SeoSection tool={tool} expanded={expandedContent} />
 
       {/* Related Tools */}
       <RelatedTools slugs={tool.relatedToolSlugs} currentSlug={tool.slug} />

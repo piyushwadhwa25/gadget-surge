@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { getToolBySlug } from '@/lib/tools-registry';
 import { toolSeoFallbackMeta, toolSeoMetaMap } from '@/lib/toolSeoMetaMap';
+import { toolContentMap } from '@/lib/toolContentMap';
 import { toolProcessors } from '@/utils/tool-logic';
 import { ToolPageTemplate } from '@/components/ToolPageTemplate';
 import { ToolInterface } from '@/components/ToolInterface';
@@ -33,6 +34,39 @@ import { ImageToBase64Tool } from '@/pages/tools/ImageToBase64Tool';
 import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
 import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
 import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
+
+function ToolSeoJsonLd({ slug, meta }: { slug: string; meta: { title: string; description: string } }) {
+  const toolContent = toolContentMap[slug];
+  const appName = meta.title.split(' —')[0];
+  const softwareLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: appName,
+    applicationCategory: 'UtilitiesApplication',
+    operatingSystem: 'Web Browser',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    url: `https://www.gadgetsurge.com/tools/${slug}`,
+  };
+  const faqLd =
+    toolContent?.faqs && toolContent.faqs.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: toolContent.faqs.map(faq => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+          })),
+        }
+      : null;
+
+  return (
+    <>
+      <script type="application/ld+json">{JSON.stringify(softwareLd)}</script>
+      {faqLd && <script type="application/ld+json">{JSON.stringify(faqLd)}</script>}
+    </>
+  );
+}
 
 const customToolComponents: Record<string, React.ComponentType<{ tool: any }>> = {
   'regex-tester': RegexTesterTool,
@@ -138,6 +172,7 @@ export default function ToolPage() {
           <meta property="og:url" content={canonical} />
           <meta property="og:type" content="website" />
           <meta property="og:site_name" content="GadgetSurge" />
+          <ToolSeoJsonLd slug={tool.slug} meta={meta} />
         </Helmet>
         <ToolPageTemplate tool={tool}>
           {CustomComponent ? <CustomComponent tool={tool} /> : null}
@@ -158,6 +193,7 @@ export default function ToolPage() {
         <meta property="og:url" content={canonical} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="GadgetSurge" />
+        <ToolSeoJsonLd slug={tool.slug} meta={meta} />
       </Helmet>
       <ToolPageTemplate tool={tool}>
         <ToolInterface

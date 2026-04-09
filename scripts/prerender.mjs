@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { toolContentMap } from './toolContentData.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -103,6 +104,147 @@ function escapeAttr(str) {
   return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function buildSchemaBlocks(route, map) {
+  const schemaBase = 'https://www.gadgetsurge.com';
+  const blocks = [];
+
+  const toolMatch = route.match(/^\/tools\/([^/]+)$/);
+  if (!toolMatch) return '';
+
+  const slug = toolMatch[1];
+  const content = map[slug];
+
+  const metaEntry = routeMeta[route];
+  const toolName = metaEntry
+    ? metaEntry.title.split(' —')[0].split(' |')[0].trim()
+    : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  const softwareApp = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: toolName,
+    applicationCategory: 'UtilitiesApplication',
+    operatingSystem: 'Web Browser',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    url: `${schemaBase}${route}`,
+  };
+
+  blocks.push(`<script type="application/ld+json">${JSON.stringify(softwareApp)}</script>`);
+
+  if (content?.faqs && content.faqs.length > 0) {
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: content.faqs.map(faq => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer,
+        },
+      })),
+    };
+
+    blocks.push(`<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`);
+  }
+
+  return blocks.join('\n');
+}
+
+function buildStaticContentBlock(route, map, metaByRoute) {
+  const toolMatch = route.match(/^\/tools\/([^/]+)$/);
+  if (!toolMatch) return '';
+
+  const slug = toolMatch[1];
+  const content = map[slug];
+  const meta = metaByRoute[route];
+
+  if (!content) return '';
+
+  const metaEntry = metaByRoute[route];
+  const toolName = metaEntry
+    ? metaEntry.title.split(' —')[0].split(' |')[0].trim()
+    : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  const parts = [];
+
+  parts.push(
+    '<div id="seo-content" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">',
+  );
+
+  if (meta) {
+    parts.push(`<h1>${escapeHtml(meta.title)}</h1>`);
+    parts.push(`<p>${escapeHtml(meta.description)}</p>`);
+  }
+
+  if (content.expandedDescription) {
+    parts.push(`<section><h2>About ${escapeHtml(toolName)}</h2>`);
+    content.expandedDescription.forEach(para => {
+      parts.push(`<p>${escapeHtml(para)}</p>`);
+    });
+    parts.push('</section>');
+  }
+
+  if (content.howToUse?.steps) {
+    parts.push(`<section><h2>How to Use ${escapeHtml(toolName)}</h2><ol>`);
+    content.howToUse.steps.forEach(step => {
+      parts.push(`<li>${escapeHtml(step)}</li>`);
+    });
+    parts.push('</ol></section>');
+  }
+
+  if (content.useCases) {
+    parts.push('<section><h2>Common Use Cases</h2><ul>');
+    content.useCases.forEach(uc => {
+      parts.push(
+        `<li><strong>${escapeHtml(uc.title)}</strong>: ${escapeHtml(uc.description)}</li>`,
+      );
+    });
+    parts.push('</ul></section>');
+  }
+
+  if (content.faqs) {
+    parts.push('<section><h2>Frequently Asked Questions</h2>');
+    content.faqs.forEach(faq => {
+      parts.push(`<h3>${escapeHtml(faq.question)}</h3>`);
+      parts.push(`<p>${escapeHtml(faq.answer)}</p>`);
+    });
+    parts.push('</section>');
+  }
+
+  parts.push('</div>');
+
+  return parts.join('\n');
+}
+
+function injectAll(html, route) {
+  html = injectMeta(html, route);
+
+  const schemaBlocks = buildSchemaBlocks(route, toolContentMap);
+  if (schemaBlocks) {
+    html = html.replace('</head>', `${schemaBlocks}\n</head>`);
+  }
+
+  const staticContent = buildStaticContentBlock(route, toolContentMap, routeMeta);
+  if (staticContent) {
+    html = html.replace('</body>', `${staticContent}\n</body>`);
+  }
+
+  return html;
+}
+
 function injectMeta(html, route) {
   const meta = routeMeta[route] ?? { ...defaultMeta, canonical: `${BASE_URL}${route}` };
   const title = escapeAttr(meta.title);
@@ -157,7 +299,7 @@ const template = readFileSync(resolve(distDir, 'index.html'), 'utf-8');
 const routes = Object.keys(routeMeta);
 
 // Overwrite root index.html
-writeFileSync(resolve(distDir, 'index.html'), injectMeta(template, '/'));
+writeFileSync(resolve(distDir, 'index.html'), injectAll(template, '/'));
 console.log('Updated: dist/index.html');
 
 // Write per-route shells
@@ -165,7 +307,7 @@ for (const route of routes) {
   if (route === '/') continue;
   const dir = resolve(distDir, route.slice(1));
   mkdirSync(dir, { recursive: true });
-  writeFileSync(resolve(dir, 'index.html'), injectMeta(template, route));
+  writeFileSync(resolve(dir, 'index.html'), injectAll(template, route));
   console.log(`Generated: dist${route}/index.html`);
 }
 
