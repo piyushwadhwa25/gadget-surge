@@ -127,6 +127,27 @@ function buildSchemaBlocks(route, map) {
     ? metaEntry.title.split(' —')[0].split(' |')[0].trim()
     : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
+  const breadcrumbCrumbName = metaEntry
+    ? metaEntry.title.split(' —')[0]
+    : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.gadgetsurge.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.gadgetsurge.com/tools' },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: breadcrumbCrumbName,
+        item: `${schemaBase}${route}`,
+      },
+    ],
+  };
+
+  blocks.push(`<script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>`);
+
   const softwareApp = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',

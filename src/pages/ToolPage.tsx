@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { getToolBySlug, type ToolConfig } from '@/lib/tools-registry';
+import { getToolBySlug } from '@/lib/tools-registry';
 import { toolSeoFallbackMeta, toolSeoMetaMap } from '@/lib/toolSeoMetaMap';
-import { toolContentMap } from '@/lib/toolContentMap';
 import { toolProcessors } from '@/utils/tool-logic';
 import { ToolPageTemplate } from '@/components/ToolPageTemplate';
 import { ToolInterface } from '@/components/ToolInterface';
@@ -35,55 +34,8 @@ import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
 import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
 import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
 
-function ToolPageHelmet({
-  slug,
-  meta,
-  tool,
-}: {
-  slug: string;
-  meta: { title: string; description: string };
-  tool: ToolConfig;
-}) {
+function ToolPageHelmet({ slug, meta }: { slug: string; meta: { title: string; description: string } }) {
   const canonical = `https://www.gadgetsurge.com/tools/${slug}`;
-  const toolContent = toolContentMap[tool.slug];
-
-  const breadcrumbLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.gadgetsurge.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.gadgetsurge.com/tools' },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: meta.title.split(' —')[0],
-        item: canonical,
-      },
-    ],
-  };
-
-  const softwareLd = {
-    '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    name: meta.title.split(' —')[0].split(' |')[0].trim(),
-    applicationCategory: 'UtilitiesApplication',
-    operatingSystem: 'Web Browser',
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    url: canonical,
-  };
-
-  const faqLd =
-    toolContent?.faqs && toolContent.faqs.length > 0
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: toolContent.faqs.map(faq => ({
-            '@type': 'Question',
-            name: faq.question,
-            acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-          })),
-        }
-      : null;
 
   return (
     <Helmet>
@@ -95,9 +47,6 @@ function ToolPageHelmet({
       <meta property="og:url" content={canonical} />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="GadgetSurge" />
-      <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
-      <script type="application/ld+json">{JSON.stringify(softwareLd)}</script>
-      {faqLd && <script type="application/ld+json">{JSON.stringify(faqLd)}</script>}
     </Helmet>
   );
 }
@@ -196,7 +145,7 @@ export default function ToolPage() {
 
   return (
     <>
-      <ToolPageHelmet slug={tool.slug} meta={meta} tool={tool} />
+      <ToolPageHelmet slug={tool.slug} meta={meta} />
       <ToolPageTemplate tool={tool}>
         {tool.type === 'custom' && CustomComponent ? (
           <CustomComponent tool={tool} />
