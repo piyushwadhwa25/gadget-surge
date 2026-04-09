@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SearchBar } from '@/components/SearchBar';
 import { ToolCard } from '@/components/ToolCard';
-import { JsonLd } from '@/components/JsonLd';
 import {
   getFeaturedTools, getPopularTools, getRecentlyAddedTools,
   getToolsByCategory, getToolsByUseCaseTag, tools, categories,
@@ -43,8 +42,8 @@ export default function Index() {
         <meta property="og:url" content="https://www.gadgetsurge.com/" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="GadgetSurge" />
+        <script type="application/ld+json">{JSON.stringify(websiteLd)}</script>
       </Helmet>
-      <JsonLd data={websiteLd} />
 
       {/* Hero */}
       <section className="container mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16 text-center">

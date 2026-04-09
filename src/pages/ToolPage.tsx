@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { getToolBySlug } from '@/lib/tools-registry';
+import { getToolBySlug, type ToolConfig } from '@/lib/tools-registry';
 import { toolSeoFallbackMeta, toolSeoMetaMap } from '@/lib/toolSeoMetaMap';
 import { toolContentMap } from '@/lib/toolContentMap';
 import { toolProcessors } from '@/utils/tool-logic';
@@ -35,18 +35,43 @@ import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
 import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
 import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
 
-function ToolSeoJsonLd({ slug, meta }: { slug: string; meta: { title: string; description: string } }) {
-  const toolContent = toolContentMap[slug];
-  const appName = meta.title.split(' —')[0];
+function ToolPageHelmet({
+  slug,
+  meta,
+  tool,
+}: {
+  slug: string;
+  meta: { title: string; description: string };
+  tool: ToolConfig;
+}) {
+  const canonical = `https://www.gadgetsurge.com/tools/${slug}`;
+  const toolContent = toolContentMap[tool.slug];
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.gadgetsurge.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Tools', item: 'https://www.gadgetsurge.com/tools' },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: meta.title.split(' —')[0],
+        item: canonical,
+      },
+    ],
+  };
+
   const softwareLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: appName,
+    name: meta.title.split(' —')[0].split(' |')[0].trim(),
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Web Browser',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    url: `https://www.gadgetsurge.com/tools/${slug}`,
+    url: canonical,
   };
+
   const faqLd =
     toolContent?.faqs && toolContent.faqs.length > 0
       ? {
@@ -61,10 +86,19 @@ function ToolSeoJsonLd({ slug, meta }: { slug: string; meta: { title: string; de
       : null;
 
   return (
-    <>
+    <Helmet>
+      <title>{meta.title}</title>
+      <meta name="description" content={meta.description} />
+      <link rel="canonical" href={canonical} />
+      <meta property="og:title" content={meta.title} />
+      <meta property="og:description" content={meta.description} />
+      <meta property="og:url" content={canonical} />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="GadgetSurge" />
+      <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
       <script type="application/ld+json">{JSON.stringify(softwareLd)}</script>
       {faqLd && <script type="application/ld+json">{JSON.stringify(faqLd)}</script>}
-    </>
+    </Helmet>
   );
 }
 
@@ -158,54 +192,26 @@ export default function ToolPage() {
     );
   }
 
-  // Custom tool rendering
-  if (tool.type === 'custom') {
-    const CustomComponent = slug ? customToolComponents[slug] : undefined;
-    return (
-      <>
-        <Helmet>
-          <title>{meta.title}</title>
-          <meta name="description" content={meta.description} />
-          <link rel="canonical" href={canonical} />
-          <meta property="og:title" content={meta.title} />
-          <meta property="og:description" content={meta.description} />
-          <meta property="og:url" content={canonical} />
-          <meta property="og:type" content="website" />
-          <meta property="og:site_name" content="GadgetSurge" />
-          <ToolSeoJsonLd slug={tool.slug} meta={meta} />
-        </Helmet>
-        <ToolPageTemplate tool={tool}>
-          {CustomComponent ? <CustomComponent tool={tool} /> : null}
-        </ToolPageTemplate>
-      </>
-    );
-  }
+  const CustomComponent = slug ? customToolComponents[slug] : undefined;
 
-  // Standard tool rendering
   return (
     <>
-      <Helmet>
-        <title>{meta.title}</title>
-        <meta name="description" content={meta.description} />
-        <link rel="canonical" href={canonical} />
-        <meta property="og:title" content={meta.title} />
-        <meta property="og:description" content={meta.description} />
-        <meta property="og:url" content={canonical} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="GadgetSurge" />
-        <ToolSeoJsonLd slug={tool.slug} meta={meta} />
-      </Helmet>
+      <ToolPageHelmet slug={tool.slug} meta={meta} tool={tool} />
       <ToolPageTemplate tool={tool}>
-        <ToolInterface
-          slug={tool.slug}
-          inputValue={input}
-          onInputChange={setInput}
-          outputValue={output}
-          error={error}
-          onProcess={handleProcess}
-          actionLabel={getActionLabel(tool.slug)}
-          exampleInput={tool.exampleInput}
-        />
+        {tool.type === 'custom' && CustomComponent ? (
+          <CustomComponent tool={tool} />
+        ) : (
+          <ToolInterface
+            slug={tool.slug}
+            inputValue={input}
+            onInputChange={setInput}
+            outputValue={output}
+            error={error}
+            onProcess={handleProcess}
+            actionLabel={getActionLabel(tool.slug)}
+            exampleInput={tool.exampleInput}
+          />
+        )}
       </ToolPageTemplate>
     </>
   );

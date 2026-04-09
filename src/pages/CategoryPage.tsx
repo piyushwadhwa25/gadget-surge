@@ -2,7 +2,6 @@ import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ToolCard } from '@/components/ToolCard';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { JsonLd } from '@/components/JsonLd';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getCategoryBySlug, getToolsByCategory, categories } from '@/lib/tools-registry';
 import { Clock, ArrowRight } from 'lucide-react';
@@ -76,6 +75,19 @@ export default function CategoryPage() {
     ],
   };
 
+  const categoryFaqLd =
+    category.faqItems && category.faqItems.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: category.faqItems.map(faq => ({
+            '@type': 'Question',
+            name: faq.question,
+            acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+          })),
+        }
+      : null;
+
   const popularTools = categoryTools.filter(t => t.popular || t.featured);
   const relatedCategories = category.relatedCategorySlugs
     ?.map(s => categories.find(c => c.slug === s))
@@ -92,8 +104,11 @@ export default function CategoryPage() {
         <meta property="og:url" content={canonical} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="GadgetSurge" />
+        <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
+        {categoryFaqLd && (
+          <script type="application/ld+json">{JSON.stringify(categoryFaqLd)}</script>
+        )}
       </Helmet>
-      <JsonLd data={breadcrumbLd} />
       <Breadcrumbs items={[{ label: category.name }]} />
 
       <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
