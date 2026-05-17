@@ -34,7 +34,9 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
       <p className="text-muted-foreground mb-6 max-w-prose">{tool.description}</p>
 
       {/* Tool Interface */}
-      {children}
+      <div style={{ minHeight: '280px' }}>
+        {children}
+      </div>
 
       {/* Ad Placeholder - Below Tool */}
       <div className="mt-8">
@@ -42,7 +44,9 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
       </div>
 
       {/* SEO Content */}
-      <SeoSection tool={tool} expanded={expandedContent} />
+      <div style={{ minHeight: '600px' }}>
+        <SeoSection tool={tool} expanded={expandedContent} />
+      </div>
 
       {/* Related Tools */}
       <RelatedTools slugs={tool.relatedToolSlugs} currentSlug={tool.slug} />
