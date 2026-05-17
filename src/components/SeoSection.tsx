@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import type { ToolConfig } from '@/lib/tools-registry';
 import { useCaseLabels } from '@/lib/tools-registry';
 import type { ToolContent } from '@/lib/toolContentMap';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Shield } from 'lucide-react';
 
 interface SeoSectionProps {
@@ -95,16 +94,14 @@ export function SeoSection({ tool, expanded }: SeoSectionProps) {
 
         <section>
           <h2 className="text-xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
-          <Accordion type="single" collapsible className="w-full rounded-lg border border-border overflow-hidden">
+          <dl className="space-y-6">
             {expanded.faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="border-b border-border last:border-0">
-                <AccordionTrigger className="text-left text-foreground px-4 hover:bg-muted/40 transition-colors">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground px-4 pb-4">{faq.answer}</AccordionContent>
-              </AccordionItem>
+              <div key={i} className="border-b border-border pb-6 last:border-0 last:pb-0">
+                <dt className="font-semibold text-foreground mb-2 leading-snug">{faq.question}</dt>
+                <dd className="text-muted-foreground leading-relaxed">{faq.answer}</dd>
+              </div>
             ))}
-          </Accordion>
+          </dl>
         </section>
 
         <p className="flex items-start gap-2 text-sm text-muted-foreground max-w-prose">
@@ -188,16 +185,14 @@ export function SeoSection({ tool, expanded }: SeoSectionProps) {
       {tool.faqItems.length > 0 && (
         <section>
           <h2 className="text-xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
-          <Accordion type="single" collapsible className="w-full rounded-lg border border-border overflow-hidden">
+          <dl className="space-y-6">
             {tool.faqItems.map((faq, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="border-b border-border last:border-0">
-                <AccordionTrigger className="text-left text-foreground px-4 hover:bg-muted/40 transition-colors">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground px-4 pb-4">{faq.answer}</AccordionContent>
-              </AccordionItem>
+              <div key={i} className="border-b border-border pb-6 last:border-0 last:pb-0">
+                <dt className="font-semibold text-foreground mb-2 leading-snug">{faq.question}</dt>
+                <dd className="text-muted-foreground leading-relaxed">{faq.answer}</dd>
+              </div>
             ))}
-          </Accordion>
+          </dl>
         </section>
       )}
     </div>

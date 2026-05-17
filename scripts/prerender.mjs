@@ -202,7 +202,7 @@ function buildStaticContentBlock(route, map, metaByRoute) {
   const parts = [];
 
   parts.push(
-    '<div id="seo-content" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">',
+    '<div id="seo-content" class="mt-12 space-y-8 text-sm text-muted-foreground max-w-prose mx-auto px-4">',
   );
 
   if (meta) {

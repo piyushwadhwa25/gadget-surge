@@ -175,7 +175,7 @@ export default function CategoryPage() {
 
       {/* Category FAQs */}
       {category.faqItems && category.faqItems.length > 0 && (
-        <section className="mt-12">
+        <section className="mt-12" style={{ minHeight: category.faqItems.length * 60 }}>
           <h2 className="text-lg font-semibold text-foreground mb-4">Frequently Asked Questions</h2>
           <Accordion type="single" collapsible className="w-full rounded-lg border border-border overflow-hidden">
             {category.faqItems.map((faq, i) => (
