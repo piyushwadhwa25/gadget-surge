@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { getToolBySlug } from '@/lib/tools-registry';
@@ -6,33 +6,6 @@ import { toolSeoFallbackMeta, toolSeoMetaMap } from '@/lib/toolSeoMetaMap';
 import { toolProcessors } from '@/utils/tool-logic';
 import { ToolPageTemplate } from '@/components/ToolPageTemplate';
 import { ToolInterface } from '@/components/ToolInterface';
-import { RegexTesterTool } from '@/pages/tools/RegexTesterTool';
-import { UuidGeneratorTool } from '@/pages/tools/UuidGeneratorTool';
-import { TimestampConverterTool } from '@/pages/tools/TimestampConverterTool';
-import { ColorConverterTool } from '@/pages/tools/ColorConverterTool';
-import { CaseConverterTool } from '@/pages/tools/CaseConverterTool';
-import { TextSorterTool } from '@/pages/tools/TextSorterTool';
-import { ReverseTextTool } from '@/pages/tools/ReverseTextTool';
-import { LoremIpsumTool } from '@/pages/tools/LoremIpsumTool';
-import { PasswordGeneratorTool } from '@/pages/tools/PasswordGeneratorTool';
-import { UsernameGeneratorTool } from '@/pages/tools/UsernameGeneratorTool';
-import { TextToListTool } from '@/pages/tools/TextToListTool';
-// Image tools
-import { ImageResizerTool } from '@/pages/tools/ImageResizerTool';
-import { ImageCropperTool } from '@/pages/tools/ImageCropperTool';
-import { ImageRotatorTool } from '@/pages/tools/ImageRotatorTool';
-import { ImageFlipperTool } from '@/pages/tools/ImageFlipperTool';
-import { ImageToPngTool } from '@/pages/tools/ImageToPngTool';
-import { ImageToJpgTool } from '@/pages/tools/ImageToJpgTool';
-import { PngToWebpTool } from '@/pages/tools/PngToWebpTool';
-import { WebpToPngTool } from '@/pages/tools/WebpToPngTool';
-import { ImageCompressorTool } from '@/pages/tools/ImageCompressorTool';
-import { ImageColorPickerTool } from '@/pages/tools/ImageColorPickerTool';
-import { ImageDimensionsTool } from '@/pages/tools/ImageDimensionsTool';
-import { ImageToBase64Tool } from '@/pages/tools/ImageToBase64Tool';
-import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
-import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
-import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
 
 function ToolPageHelmet({ slug, meta }: { slug: string; meta: { title: string; description: string } }) {
   const canonical = `https://www.gadgetsurge.com/tools/${slug}`;
@@ -51,34 +24,33 @@ function ToolPageHelmet({ slug, meta }: { slug: string; meta: { title: string; d
   );
 }
 
-const customToolComponents: Record<string, React.ComponentType<{ tool: any }>> = {
-  'regex-tester': RegexTesterTool,
-  'uuid-generator': UuidGeneratorTool,
-  'timestamp-converter': TimestampConverterTool,
-  'color-converter': ColorConverterTool,
-  'case-converter': CaseConverterTool,
-  'text-sorter': TextSorterTool,
-  'reverse-text': ReverseTextTool,
-  'lorem-ipsum-generator': LoremIpsumTool,
-  'random-password-generator': PasswordGeneratorTool,
-  'random-username-generator': UsernameGeneratorTool,
-  'text-to-list': TextToListTool,
-  // Image tools
-  'image-resizer': ImageResizerTool,
-  'image-cropper': ImageCropperTool,
-  'image-rotator': ImageRotatorTool,
-  'image-flipper': ImageFlipperTool,
-  'image-to-png': ImageToPngTool,
-  'image-to-jpg': ImageToJpgTool,
-  'png-to-webp': PngToWebpTool,
-  'webp-to-png': WebpToPngTool,
-  'image-compressor': ImageCompressorTool,
-  'image-color-picker': ImageColorPickerTool,
-  'image-dimensions-checker': ImageDimensionsTool,
-  'image-to-base64': ImageToBase64Tool,
-  'base64-to-image': Base64ToImageTool,
-  'favicon-generator': FaviconGeneratorTool,
-  'image-format-info': ImageFormatInfoTool,
+const customToolComponents: Record<string, React.LazyExoticComponent<React.ComponentType<{ tool: any }>>> = {
+  'regex-tester': React.lazy(() => import('@/pages/tools/RegexTesterTool').then(m => ({ default: m.RegexTesterTool }))),
+  'uuid-generator': React.lazy(() => import('@/pages/tools/UuidGeneratorTool').then(m => ({ default: m.UuidGeneratorTool }))),
+  'timestamp-converter': React.lazy(() => import('@/pages/tools/TimestampConverterTool').then(m => ({ default: m.TimestampConverterTool }))),
+  'color-converter': React.lazy(() => import('@/pages/tools/ColorConverterTool').then(m => ({ default: m.ColorConverterTool }))),
+  'case-converter': React.lazy(() => import('@/pages/tools/CaseConverterTool').then(m => ({ default: m.CaseConverterTool }))),
+  'text-sorter': React.lazy(() => import('@/pages/tools/TextSorterTool').then(m => ({ default: m.TextSorterTool }))),
+  'reverse-text': React.lazy(() => import('@/pages/tools/ReverseTextTool').then(m => ({ default: m.ReverseTextTool }))),
+  'lorem-ipsum-generator': React.lazy(() => import('@/pages/tools/LoremIpsumTool').then(m => ({ default: m.LoremIpsumTool }))),
+  'random-password-generator': React.lazy(() => import('@/pages/tools/PasswordGeneratorTool').then(m => ({ default: m.PasswordGeneratorTool }))),
+  'random-username-generator': React.lazy(() => import('@/pages/tools/UsernameGeneratorTool').then(m => ({ default: m.UsernameGeneratorTool }))),
+  'text-to-list': React.lazy(() => import('@/pages/tools/TextToListTool').then(m => ({ default: m.TextToListTool }))),
+  'image-resizer': React.lazy(() => import('@/pages/tools/ImageResizerTool').then(m => ({ default: m.ImageResizerTool }))),
+  'image-cropper': React.lazy(() => import('@/pages/tools/ImageCropperTool').then(m => ({ default: m.ImageCropperTool }))),
+  'image-rotator': React.lazy(() => import('@/pages/tools/ImageRotatorTool').then(m => ({ default: m.ImageRotatorTool }))),
+  'image-flipper': React.lazy(() => import('@/pages/tools/ImageFlipperTool').then(m => ({ default: m.ImageFlipperTool }))),
+  'image-to-png': React.lazy(() => import('@/pages/tools/ImageToPngTool').then(m => ({ default: m.ImageToPngTool }))),
+  'image-to-jpg': React.lazy(() => import('@/pages/tools/ImageToJpgTool').then(m => ({ default: m.ImageToJpgTool }))),
+  'png-to-webp': React.lazy(() => import('@/pages/tools/PngToWebpTool').then(m => ({ default: m.PngToWebpTool }))),
+  'webp-to-png': React.lazy(() => import('@/pages/tools/WebpToPngTool').then(m => ({ default: m.WebpToPngTool }))),
+  'image-compressor': React.lazy(() => import('@/pages/tools/ImageCompressorTool').then(m => ({ default: m.ImageCompressorTool }))),
+  'image-color-picker': React.lazy(() => import('@/pages/tools/ImageColorPickerTool').then(m => ({ default: m.ImageColorPickerTool }))),
+  'image-dimensions-checker': React.lazy(() => import('@/pages/tools/ImageDimensionsTool').then(m => ({ default: m.ImageDimensionsTool }))),
+  'image-to-base64': React.lazy(() => import('@/pages/tools/ImageToBase64Tool').then(m => ({ default: m.ImageToBase64Tool }))),
+  'base64-to-image': React.lazy(() => import('@/pages/tools/Base64ToImageTool').then(m => ({ default: m.Base64ToImageTool }))),
+  'favicon-generator': React.lazy(() => import('@/pages/tools/FaviconGeneratorTool').then(m => ({ default: m.FaviconGeneratorTool }))),
+  'image-format-info': React.lazy(() => import('@/pages/tools/ImageFormatInfoTool').then(m => ({ default: m.ImageFormatInfoTool }))),
 };
 
 export default function ToolPage() {
@@ -148,7 +120,9 @@ export default function ToolPage() {
       <ToolPageHelmet slug={tool.slug} meta={meta} />
       <ToolPageTemplate tool={tool}>
         {tool.type === 'custom' && CustomComponent ? (
-          <CustomComponent tool={tool} />
+          <React.Suspense fallback={<div style={{ minHeight: '280px' }} />}>
+            <CustomComponent tool={tool} />
+          </React.Suspense>
         ) : (
           <ToolInterface
             slug={tool.slug}
