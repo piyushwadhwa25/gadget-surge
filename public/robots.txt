@@ -9,6 +9,9 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
+User-agent: Mediapartners-Google
+Allow: /
+
 User-agent: Slurp
 Allow: /
 
