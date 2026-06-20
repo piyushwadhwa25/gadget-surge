@@ -1,16 +1,5 @@
 // Text tool logic — pure client-side functions
 
-export function wordCount(input: string): string {
-  const text = input.trim();
-  if (!text) return 'Words: 0\nCharacters: 0\nCharacters (no spaces): 0\nLines: 0\nParagraphs: 0';
-  const words = text.split(/\s+/).filter(Boolean).length;
-  const chars = text.length;
-  const charsNoSpaces = text.replace(/\s/g, '').length;
-  const lines = text.split('\n').length;
-  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim()).length || 1;
-  return `Words: ${words}\nCharacters: ${chars}\nCharacters (no spaces): ${charsNoSpaces}\nLines: ${lines}\nParagraphs: ${paragraphs}`;
-}
-
 export function characterCount(input: string): string {
   const chars = input.length;
   const charsNoSpaces = input.replace(/\s/g, '').length;
@@ -136,7 +125,6 @@ export function textToList(input: string, format: 'bullet' | 'numbered' = 'bulle
 
 // Standard processor map for tools that use the simple input→output pattern
 export const textToolProcessors: Record<string, (input: string) => string> = {
-  'word-counter': wordCount,
   'character-counter': characterCount,
   'sentence-counter': sentenceCount,
   'paragraph-counter': paragraphCount,

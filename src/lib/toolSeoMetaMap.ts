@@ -180,6 +180,18 @@ export const toolSeoMetaMap: Record<string, { title: string; description: string
     title: "Image Format Info — Free Online Image Metadata Viewer | GadgetSurge",
     description: "Free online image format info tool. Upload any image to see its format, dimensions, file size, colour depth, and metadata. Runs entirely in your browser.",
   },
+  "pdf-merger": {
+    title: "PDF Merger — Combine PDF Files Online Free | GadgetSurge",
+    description: "Free online PDF merger. Combine multiple PDF files into one document, reorder before merging. Runs entirely in your browser — no upload required.",
+  },
+  "pdf-page-remover": {
+    title: "PDF Page Remover — Delete PDF Pages Online Free | GadgetSurge",
+    description: "Free online PDF page remover. Select pages to delete by number or range. Download the edited PDF instantly. 100% client-side processing.",
+  },
+  "pdf-splitter": {
+    title: "PDF Splitter — Split PDF Files Online Free | GadgetSurge",
+    description: "Free online PDF splitter. Split PDFs every N pages or by custom page ranges. Download separate files instantly. Runs in your browser.",
+  },
 };
 
 export const toolSeoFallbackMeta = {

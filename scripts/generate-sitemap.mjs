@@ -59,6 +59,9 @@ const routes = [
   { path: '/tools/base64-to-image', priority: '0.7', changefreq: 'weekly' },
   { path: '/tools/favicon-generator', priority: '0.8', changefreq: 'weekly' },
   { path: '/tools/image-format-info', priority: '0.7', changefreq: 'weekly' },
+  { path: '/tools/pdf-merger', priority: '0.9', changefreq: 'weekly' },
+  { path: '/tools/pdf-page-remover', priority: '0.8', changefreq: 'weekly' },
+  { path: '/tools/pdf-splitter', priority: '0.9', changefreq: 'weekly' },
 ];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>

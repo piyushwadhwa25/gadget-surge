@@ -19,12 +19,12 @@ export default function CategoryPage() {
       description: "Free browser-based image tools. Resize, crop, rotate, compress, and convert images between formats (PNG, JPG, WebP). No upload to server — runs in your browser.",
     },
     "text-tools": {
-      title: "Free Online Text Tools — Word Counter, Case Converter & More | GadgetSurge",
-      description: "Free text utilities including word counter, character counter, case converter, duplicate line remover, text sorter, lorem ipsum generator, and more.",
+      title: "Free Online Text Tools — Case Converter, Password Generator & More | GadgetSurge",
+      description: "Free text utilities including character counter, case converter, duplicate line remover, text sorter, lorem ipsum generator, and more.",
     },
     "document-tools": {
-      title: "Free Online Document Tools — Markdown, HTML, SQL | GadgetSurge",
-      description: "Free document conversion and formatting tools. Convert Markdown to HTML, format SQL queries, format HTML, and more. All tools run in your browser.",
+      title: "Free Online Document Tools — PDF Merger, Splitter & More | GadgetSurge",
+      description: "Free document tools including PDF merger, PDF splitter, page remover, and word counter. All tools run in your browser — no upload required.",
     },
     "calculators": {
       title: "Free Online Calculators — GadgetSurge",

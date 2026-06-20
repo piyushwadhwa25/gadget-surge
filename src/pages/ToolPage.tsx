@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ComponentType } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense, type ComponentType } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { getToolBySlug } from '@/lib/tools-registry';
@@ -32,6 +32,10 @@ import { ImageToBase64Tool } from '@/pages/tools/ImageToBase64Tool';
 import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
 import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
 import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
+
+const PdfMergerTool = lazy(() => import('@/pages/tools/PdfMergerTool').then(m => ({ default: m.PdfMergerTool })));
+const PdfPageRemoverTool = lazy(() => import('@/pages/tools/PdfPageRemoverTool').then(m => ({ default: m.PdfPageRemoverTool })));
+const PdfSplitterTool = lazy(() => import('@/pages/tools/PdfSplitterTool').then(m => ({ default: m.PdfSplitterTool })));
 
 function ToolPageHelmet({ slug, meta }: { slug: string; meta: { title: string; description: string } }) {
   const canonical = `https://www.gadgetsurge.com/tools/${slug}`;
@@ -77,6 +81,9 @@ const customToolComponents: Record<string, ComponentType<{ tool: any }>> = {
   'base64-to-image': Base64ToImageTool,
   'favicon-generator': FaviconGeneratorTool,
   'image-format-info': ImageFormatInfoTool,
+  'pdf-merger': PdfMergerTool,
+  'pdf-page-remover': PdfPageRemoverTool,
+  'pdf-splitter': PdfSplitterTool,
 };
 
 export default function ToolPage() {
@@ -146,7 +153,9 @@ export default function ToolPage() {
       <ToolPageHelmet slug={tool.slug} meta={meta} />
       <ToolPageTemplate tool={tool}>
         {tool.type === 'custom' && CustomComponent ? (
-          <CustomComponent tool={tool} />
+          <Suspense fallback={<div className="text-sm text-muted-foreground py-8 text-center">Loading tool…</div>}>
+            <CustomComponent tool={tool} />
+          </Suspense>
         ) : (
           <ToolInterface
             slug={tool.slug}

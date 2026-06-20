@@ -269,6 +269,40 @@ export function testRegex(pattern: string, flags: string, text: string): { match
   return { matches: results, count: results.length };
 }
 
+// Word Counter (Document Tools)
+export function countWords(text: string): {
+  words: number;
+  characters: number;
+  charactersNoSpaces: number;
+  sentences: number;
+  paragraphs: number;
+  readingTimeMinutes: number;
+} {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return { words: 0, characters: 0, charactersNoSpaces: 0, sentences: 0, paragraphs: 0, readingTimeMinutes: 0 };
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean).length;
+  const characters = text.length;
+  const charactersNoSpaces = text.replace(/\s/g, '').length;
+  const sentences = trimmed.split(/[.!?]+/).filter(s => s.trim()).length;
+  const paragraphs = trimmed.split(/\n\s*\n/).filter(p => p.trim()).length || 1;
+  const readingTimeMinutes = words === 0 ? 0 : Math.ceil(words / 225);
+  return { words, characters, charactersNoSpaces, sentences, paragraphs, readingTimeMinutes };
+}
+
+export function formatWordCount(input: string): string {
+  const stats = countWords(input);
+  return [
+    `Words: ${stats.words}`,
+    `Characters: ${stats.characters}`,
+    `Characters (no spaces): ${stats.charactersNoSpaces}`,
+    `Sentences: ${stats.sentences}`,
+    `Paragraphs: ${stats.paragraphs}`,
+    `Reading time: ~${stats.readingTimeMinutes} min`,
+  ].join('\n');
+}
+
 // Re-export text tool processors
 import { textToolProcessors } from './text-tools';
 
@@ -285,5 +319,6 @@ export const toolProcessors: Record<string, (input: string) => string> = {
   'markdown-to-html': markdownToHtml,
   'html-formatter': formatHtml,
   'sql-formatter': formatSql,
+  'word-counter': formatWordCount,
   ...textToolProcessors,
 };

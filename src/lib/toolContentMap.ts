@@ -1382,4 +1382,106 @@ export const toolContentMap: Record<string, ToolContent> = {
     ],
     trustNote: 'All image inspection runs in your browser — your images are never uploaded to any server.',
   },
+
+  'pdf-merger': {
+    howToUse: {
+      steps: [
+        'Click "Upload PDFs" or drag and drop multiple PDF files onto the upload area.',
+        'Reorder files using the up and down arrows so they merge in the correct sequence.',
+        'Review the total page count and file size summary.',
+        'Click "Merge PDFs" and download the combined document.',
+      ],
+    },
+    expandedDescription: [
+      'Combining multiple PDF files is a common task when you have report sections saved separately, scanned pages in batches, or invoices that need to be joined into one file for sharing or printing.',
+      'This free PDF merger runs entirely in your browser using pdf-lib. Upload as many PDFs as you need, arrange them in order, and download a single merged file. No account, no upload to a server, and no watermarks.',
+      'The tool shows each file\'s page count and size before merging, plus the combined totals after merge so you can verify the result matches your expectations.',
+      'Password-protected PDFs cannot be merged until the encryption is removed. If a file is corrupted or invalid, the tool displays a clear error message.',
+    ],
+    useCases: [
+      { title: 'Report assembly', description: 'Combine cover page, main content, and appendix PDFs into one deliverable document.' },
+      { title: 'Scan consolidation', description: 'Merge batches of scanned pages into a single archive-quality PDF.' },
+      { title: 'Invoice bundling', description: 'Join monthly invoice PDFs into one file for accounting or email attachment.' },
+      { title: 'Course materials', description: 'Merge lecture slides, handouts, and readings into one downloadable packet.' },
+      { title: 'Legal document compilation', description: 'Combine exhibits and supporting documents in a defined order for review.' },
+      { title: 'Portfolio creation', description: 'Merge design proofs or project PDFs into a single presentation file.' },
+    ],
+    faqs: [
+      { question: 'Is there a limit on how many PDFs I can merge?', answer: 'There is no fixed limit. Practical limits depend on your browser memory and PDF sizes. Most users can merge dozens of files without issue.' },
+      { question: 'Does merge order matter?', answer: 'Yes. Pages appear in the order of your file list, top to bottom. Use the arrow buttons to reorder before merging.' },
+      { question: 'Are my files uploaded anywhere?', answer: 'No. Merging uses pdf-lib in your browser. Files never leave your device.' },
+      { question: 'What happens to bookmarks and links?', answer: 'Basic page content is preserved. Complex PDF features like form fields, bookmarks, and internal links may not carry over perfectly after merging.' },
+      { question: 'Can I merge PDFs with different page sizes?', answer: 'Yes. Each page keeps its original dimensions in the merged output.' },
+      { question: 'Why does merging fail?', answer: 'Common causes include password-protected PDFs, corrupted files, or non-PDF files renamed with a .pdf extension. Unlock or repair the source file and try again.' },
+    ],
+    trustNote: 'All PDF processing runs in your browser — your files are never uploaded to any server.',
+  },
+
+  'pdf-page-remover': {
+    howToUse: {
+      steps: [
+        'Upload a PDF file using the Upload button.',
+        'Enter page numbers to remove (e.g. 2, 5, 7-9) or click page buttons to select them.',
+        'Confirm how many pages will remain in the output.',
+        'Click "Remove Pages & Download" to save the edited PDF.',
+      ],
+    },
+    expandedDescription: [
+      'Sometimes you need to trim a PDF — remove blank pages, cut confidential sections, or drop unwanted appendices before sharing. This tool lets you delete specific pages without desktop software.',
+      'Select pages individually with checkboxes or type a comma-separated list with ranges. The tool validates page numbers against the document and blocks removal of every page so you always get a usable result.',
+      'Processing happens locally with pdf-lib. Your PDF is never sent to a server, making this safe for sensitive documents.',
+      'The original file on your device is never modified. You download a new PDF with the selected pages removed.',
+    ],
+    useCases: [
+      { title: 'Removing blank pages', description: 'Delete empty pages from scanned documents before sharing.' },
+      { title: 'Redacting sections', description: 'Remove pages containing confidential or irrelevant content.' },
+      { title: 'Trimming appendices', description: 'Drop unwanted appendix or reference pages from a report.' },
+      { title: 'Fixing scan errors', description: 'Remove duplicate or mis-scanned pages from a multi-page scan.' },
+      { title: 'Preparing print files', description: 'Delete cover or instruction pages not needed for final print output.' },
+      { title: 'Email size reduction', description: 'Remove large-image pages to reduce file size before sending.' },
+    ],
+    faqs: [
+      { question: 'Can I remove all pages?', answer: 'No. The tool requires at least one page to remain. If you need to discard the entire document, delete the file instead.' },
+      { question: 'Are page numbers 1-based?', answer: 'Yes. Page 1 is the first page, matching standard PDF viewer labels.' },
+      { question: 'How do ranges work?', answer: 'A range like 7-9 removes pages 7, 8, and 9 inclusive. Combine ranges with commas: 2, 5, 7-9.' },
+      { question: 'Is the original PDF changed?', answer: 'No. You download a new file. Your original stays untouched.' },
+      { question: 'Does this work on encrypted PDFs?', answer: 'Password-protected PDFs must be unlocked first. The tool cannot process encrypted files.' },
+      { question: 'Will formatting be preserved?', answer: 'Remaining pages are copied as-is. Text, images, and layout on kept pages are preserved.' },
+    ],
+    trustNote: 'All PDF editing runs in your browser — your files are never uploaded to any server.',
+  },
+
+  'pdf-splitter': {
+    howToUse: {
+      steps: [
+        'Upload the PDF you want to split.',
+        'Choose "Every N pages" for equal chunks or "Page ranges" for custom sections.',
+        'Enter the split size or range specification (e.g. 1-3, 5-7).',
+        'Click "Split & Download" — each part downloads as a separate PDF file.',
+      ],
+    },
+    expandedDescription: [
+      'Large PDFs are hard to email, slow to open, and awkward to share one section at a time. Splitting lets you break a document into manageable parts or extract only the pages you need.',
+      'Split every N pages to create equal consecutive chunks — useful for dividing a long scan or manual into parts. Or use page ranges to extract specific chapters, exhibits, or sections as separate files.',
+      'Each output file downloads individually. No zip archive is required — your browser handles multiple downloads. All splitting runs client-side with pdf-lib for complete privacy.',
+      'The tool validates your settings against the page count and shows clear errors if a split size exceeds the document length or ranges are out of bounds.',
+    ],
+    useCases: [
+      { title: 'Chapter extraction', description: 'Pull individual chapters from an ebook or manual PDF using page ranges.' },
+      { title: 'Email-friendly chunks', description: 'Split a large PDF into smaller parts that fit email attachment limits.' },
+      { title: 'Batch processing prep', description: 'Divide a multi-page scan into single-page or few-page files for OCR or review.' },
+      { title: 'Sharing specific sections', description: 'Send only the relevant pages to a colleague without sharing the full document.' },
+      { title: 'Archive organisation', description: 'Split yearly report compilations into monthly or quarterly files.' },
+      { title: 'Print shop submission', description: 'Separate cover, body, and insert pages for different print specifications.' },
+    ],
+    faqs: [
+      { question: 'What is the difference between the two split modes?', answer: '"Every N pages" splits the PDF into consecutive equal-sized chunks automatically. "Page ranges" lets you define custom sections like 1-3 and 8-10, each becoming its own file.' },
+      { question: 'Are files downloaded as a zip?', answer: 'No. Each split PDF downloads individually. Allow multiple downloads if your browser prompts you.' },
+      { question: 'What if N is larger than the page count?', answer: 'The tool shows an error. N must be between 1 and the total number of pages in the PDF.' },
+      { question: 'Can ranges overlap?', answer: 'Yes, but overlapping ranges will produce files with duplicate pages. Define non-overlapping ranges for clean splits.' },
+      { question: 'Are my PDFs uploaded to a server?', answer: 'No. Splitting happens entirely in your browser.' },
+      { question: 'Does page order stay the same?', answer: 'Yes. Pages within each output file maintain their original order from the source PDF.' },
+    ],
+    trustNote: 'All PDF splitting runs in your browser — your files are never uploaded to any server.',
+  },
 };

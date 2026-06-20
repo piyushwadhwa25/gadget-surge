@@ -34,13 +34,13 @@ const routeMeta = {
     canonical: `${BASE_URL}/category/image-tools`,
   },
   '/category/text-tools': {
-    title: 'Free Online Text Tools — Word Counter, Case Converter & More | GadgetSurge',
-    description: 'Free text utilities including word counter, character counter, case converter, duplicate line remover, text sorter, lorem ipsum generator, and more.',
+    title: 'Free Online Text Tools — Case Converter, Password Generator & More | GadgetSurge',
+    description: 'Free text utilities including character counter, case converter, duplicate line remover, text sorter, lorem ipsum generator, and more.',
     canonical: `${BASE_URL}/category/text-tools`,
   },
   '/category/document-tools': {
-    title: 'Free Online Document Tools — Markdown, HTML, SQL | GadgetSurge',
-    description: 'Free document conversion and formatting tools. Convert Markdown to HTML, format SQL queries, format HTML, and more. All tools run in your browser.',
+    title: 'Free Online Document Tools — PDF Merger, Splitter & More | GadgetSurge',
+    description: 'Free document tools including PDF merger, PDF splitter, page remover, and word counter. All tools run in your browser — no upload required.',
     canonical: `${BASE_URL}/category/document-tools`,
   },
   '/category/calculators': {
@@ -93,6 +93,9 @@ const routeMeta = {
   '/tools/base64-to-image': { title: 'Base64 to Image Converter — Free Online Tool | GadgetSurge', description: 'Free online Base64 to image converter. Paste a Base64 encoded image string and instantly preview and download the decoded image. No server upload.', canonical: `${BASE_URL}/tools/base64-to-image` },
   '/tools/favicon-generator': { title: 'Favicon Generator — Free Online Favicon Creator | GadgetSurge', description: 'Free online favicon generator. Upload an image and generate favicon files in all required sizes (16x16, 32x32, 48x48, 64x64). Download as ICO or PNG.', canonical: `${BASE_URL}/tools/favicon-generator` },
   '/tools/image-format-info': { title: 'Image Format Info — Free Online Image Metadata Viewer | GadgetSurge', description: 'Free online image format info tool. Upload any image to see its format, dimensions, file size, colour depth, and metadata. Runs entirely in your browser.', canonical: `${BASE_URL}/tools/image-format-info` },
+  '/tools/pdf-merger': { title: 'PDF Merger — Combine PDF Files Online Free | GadgetSurge', description: 'Free online PDF merger. Combine multiple PDF files into one document, reorder before merging. Runs entirely in your browser — no upload required.', canonical: `${BASE_URL}/tools/pdf-merger` },
+  '/tools/pdf-page-remover': { title: 'PDF Page Remover — Delete PDF Pages Online Free | GadgetSurge', description: 'Free online PDF page remover. Select pages to delete by number or range. Download the edited PDF instantly. 100% client-side processing.', canonical: `${BASE_URL}/tools/pdf-page-remover` },
+  '/tools/pdf-splitter': { title: 'PDF Splitter — Split PDF Files Online Free | GadgetSurge', description: 'Free online PDF splitter. Split PDFs every N pages or by custom page ranges. Download separate files instantly. Runs in your browser.', canonical: `${BASE_URL}/tools/pdf-splitter` },
 };
 
 const defaultMeta = {
