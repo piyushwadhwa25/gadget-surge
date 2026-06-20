@@ -1,5 +1,7 @@
 // Analytics layer wired to Google Tag Manager via window.dataLayer.
 
+import { getToolBySlug } from './tools-registry';
+
 export type AnalyticsEvent =
   | { type: 'tool_viewed'; slug: string }
   | { type: 'tool_action_run'; slug: string; action: string }
@@ -26,8 +28,16 @@ function pushToGTM(eventName: string, payload: Record<string, unknown>) {
 /** Map internal event types to GTM event names + payloads. */
 function eventToGTM(event: AnalyticsEvent): { name: string; payload: Record<string, unknown> } {
   switch (event.type) {
-    case 'tool_viewed':
-      return { name: 'tool_view', payload: { tool_name: event.slug, category: 'developer-tools' } };
+    case 'tool_viewed': {
+      const tool = getToolBySlug(event.slug);
+      return {
+        name: 'tool_view',
+        payload: {
+          tool_name: event.slug,
+          category: tool?.categorySlug ?? 'unknown',
+        },
+      };
+    }
     case 'tool_action_run':
       return { name: 'tool_run', payload: { tool_name: event.slug, action: event.action } };
     case 'copy_result':
