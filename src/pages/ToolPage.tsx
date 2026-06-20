@@ -32,6 +32,7 @@ import { ImageToBase64Tool } from '@/pages/tools/ImageToBase64Tool';
 import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
 import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
 import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
+import { ColorContrastCheckerTool } from '@/pages/tools/ColorContrastCheckerTool';
 
 const PdfMergerTool = lazy(() => import('@/pages/tools/PdfMergerTool').then(m => ({ default: m.PdfMergerTool })));
 const PdfPageRemoverTool = lazy(() => import('@/pages/tools/PdfPageRemoverTool').then(m => ({ default: m.PdfPageRemoverTool })));
@@ -84,6 +85,7 @@ const customToolComponents: Record<string, ComponentType<{ tool: any }>> = {
   'pdf-merger': PdfMergerTool,
   'pdf-page-remover': PdfPageRemoverTool,
   'pdf-splitter': PdfSplitterTool,
+  'color-contrast-checker': ColorContrastCheckerTool,
 };
 
 export default function ToolPage() {
@@ -194,6 +196,9 @@ function getActionLabel(slug: string): string {
     'remove-line-breaks': 'Remove Line Breaks',
     'duplicate-line-remover': 'Remove Duplicates',
     'slug-generator': 'Generate Slug',
+    'unix-timestamp-converter': 'Convert Timestamp',
+    'cron-expression-calculator': 'Parse Cron',
+    'data-size-converter': 'Convert Size',
   };
   return labels[slug] || 'Process';
 }

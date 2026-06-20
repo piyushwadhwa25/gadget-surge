@@ -1484,4 +1484,141 @@ export const toolContentMap: Record<string, ToolContent> = {
     ],
     trustNote: 'All PDF splitting runs in your browser — your files are never uploaded to any server.',
   },
+
+  'unix-timestamp-converter': {
+    howToUse: {
+      steps: [
+        'Paste a Unix timestamp (seconds or milliseconds) or a human-readable date into the input field.',
+        'Click "Convert Timestamp" to see all formatted outputs.',
+        'Review ISO 8601, UTC, local time, relative time, and both epoch formats.',
+        'Copy the output or use Load Example to try a sample timestamp.',
+      ],
+    },
+    expandedDescription: [
+      'Unix timestamps are the lingua franca of APIs, databases, and log files — but raw epoch numbers are hard to read. This converter instantly translates between timestamps and human-readable dates.',
+      'The tool auto-detects whether your input is seconds (10 digits) or milliseconds (13 digits). You can also paste date strings in common formats and get the equivalent epoch values back.',
+      'Relative time ("3 days ago", "in 2 hours") helps you quickly gauge how far a timestamp is from the current moment — useful when triaging logs or checking token expiry.',
+      'All conversion runs locally in your browser. Timestamps from production systems, auth tokens, and private logs never leave your device.',
+    ],
+    useCases: [
+      { title: 'API debugging', description: 'Convert created_at and updated_at epoch values from JSON API responses into readable dates.' },
+      { title: 'Log analysis', description: 'Translate Unix timestamps in server logs to local time for incident investigation.' },
+      { title: 'Database queries', description: 'Convert between epoch and ISO format when writing or verifying SQL/NoSQL date filters.' },
+      { title: 'JWT expiry checks', description: 'Convert the exp claim epoch value to see exactly when a token expires.' },
+      { title: 'Cross-timezone coordination', description: 'See both UTC and local representations of a meeting or deployment time.' },
+      { title: 'Migration validation', description: 'Verify epoch values after migrating data between systems with different date formats.' },
+    ],
+    faqs: [
+      { question: 'What is a Unix timestamp?', answer: 'A Unix timestamp is the number of seconds (or milliseconds) since January 1, 1970 00:00:00 UTC — the Unix epoch. It is timezone-independent and widely used in programming.' },
+      { question: 'How does auto-detection work?', answer: 'Pure numeric input with 13 or more digits is treated as milliseconds. Shorter numeric values are treated as seconds. Date strings are parsed by the browser Date parser.' },
+      { question: 'What date formats are accepted?', answer: 'ISO 8601 (2024-06-15T14:30:00Z), US formats (06/15/2024), and natural language (Jun 15, 2024 2:30 PM) are supported via the JavaScript Date parser.' },
+      { question: 'What is relative time?', answer: 'Relative time expresses how far a date is from now — e.g. "2 hours ago" or "in 5 days". It uses the Intl.RelativeTimeFormat API for natural phrasing.' },
+      { question: 'Is this different from the Developer Tools timestamp converter?', answer: 'This calculator adds relative time and accepts date strings as input in a single field. The developer timestamp tool offers a dedicated date↔epoch UI with a "Now" button.' },
+      { question: 'Is my input sent to a server?', answer: 'No. All conversion happens in your browser using JavaScript Date APIs.' },
+    ],
+    trustNote: 'All timestamp conversion runs locally in your browser — no data is sent to any server.',
+  },
+
+  'cron-expression-calculator': {
+    howToUse: {
+      steps: [
+        'Enter a standard 5-field cron expression (minute hour day month weekday).',
+        'Click "Parse Cron" to get a human-readable description.',
+        'Review the next 5 scheduled run times in your local timezone.',
+        'Adjust the expression and re-parse until the schedule matches your intent.',
+      ],
+    },
+    expandedDescription: [
+      'Cron expressions power scheduled jobs across Linux, CI/CD pipelines, Kubernetes CronJobs, and backup systems — but five space-separated fields are easy to misread. This calculator translates cron syntax into plain English and shows upcoming run times.',
+      'The parser supports wildcards (*), lists (1,3,5), ranges (1-5), and step values (*/15, 1-30/5) for all five standard fields.',
+      'Next run times are computed from the current moment forward, displayed in both local time and ISO 8601 UTC. This helps validate that a cron job will fire when you expect before deploying to production.',
+      'No external cron library is required — parsing and scheduling logic runs entirely in your browser.',
+    ],
+    useCases: [
+      { title: 'CI/CD schedule validation', description: 'Verify that "0 2 * * *" runs at 2:00 AM daily before adding it to GitHub Actions or Jenkins.' },
+      { title: 'Kubernetes CronJob setup', description: 'Confirm cron syntax before applying a CronJob manifest to your cluster.' },
+      { title: 'Backup scheduling', description: 'Plan database backup windows by seeing exact next run times for expressions like "0 3 * * 0".' },
+      { title: 'On-call rotation checks', description: 'Validate weekly schedules such as "0 9 * * 1" (every Monday at 9 AM).' },
+      { title: 'Learning cron syntax', description: 'Experiment with expressions and immediately see what they mean in plain language.' },
+      { title: 'Debugging missed jobs', description: 'Compare expected vs actual run times when a scheduled task did not fire as expected.' },
+    ],
+    faqs: [
+      { question: 'What cron format does this support?', answer: 'Standard Unix 5-field cron: minute (0-59), hour (0-23), day of month (1-31), month (1-12), weekday (0-6 where 0=Sunday). Fields are space-separated.' },
+      { question: 'Does it support seconds or years?', answer: 'No. This tool supports 5-field cron only. Quartz 6-field cron (with seconds) and systemd calendar expressions are not supported.' },
+      { question: 'How are next run times calculated?', answer: 'The tool iterates minute-by-minute from the current time forward, checking each minute against the parsed cron fields. Up to 2 years of minutes are scanned to find the next 5 matches.' },
+      { question: 'What timezone is used?', answer: 'Run times are shown in your browser\'s local timezone. ISO 8601 UTC is also included for each run time.' },
+      { question: 'What does */15 in the minute field mean?', answer: 'Every 15 minutes — at :00, :15, :30, and :45 past each hour. Step syntax divides the range by the step value.' },
+      { question: 'Why might my expression show an error?', answer: 'Common issues: wrong number of fields (must be exactly 5), values out of range (e.g. minute 60), or invalid step syntax. Check that weekday 0=Sunday and day-of-month starts at 1.' },
+    ],
+    trustNote: 'Cron parsing runs entirely in your browser — expressions are never sent to any server.',
+  },
+
+  'color-contrast-checker': {
+    howToUse: {
+      steps: [
+        'Enter foreground (text) and background hex colors using the color pickers or hex inputs.',
+        'Preview sample text on the live swatch to see how the combination looks.',
+        'Click "Check Contrast" to calculate the WCAG contrast ratio.',
+        'Review AA and AAA pass/fail results for normal and large text.',
+      ],
+    },
+    expandedDescription: [
+      'Color contrast is a foundational requirement for accessible web design. WCAG 2.x specifies minimum contrast ratios between text and its background so content remains readable for users with low vision or color deficiency.',
+      'This calculator computes the contrast ratio using the official WCAG relative luminance formula. Enter any two hex colors and instantly see whether the combination passes WCAG AA and AAA thresholds for both normal and large text.',
+      'The live preview swatch shows sample body and heading text rendered with your chosen colors — so you can evaluate aesthetics and accessibility together before updating your CSS or design system.',
+      'Pair this tool with the Color Converter and Image Color Picker to sample colors from designs and verify they meet accessibility standards.',
+    ],
+    useCases: [
+      { title: 'CSS variable validation', description: 'Check that --text-primary on --bg-surface meets WCAG AA before shipping a theme update.' },
+      { title: 'Button and link styling', description: 'Verify CTA button text contrast against brand background colors.' },
+      { title: 'Design system audits', description: 'Batch-check palette combinations used across components for accessibility compliance.' },
+      { title: 'Dark mode tuning', description: 'Ensure dark theme text/background pairs maintain sufficient contrast.' },
+      { title: 'Client deliverable review', description: 'Document contrast ratios for accessibility statements and QA checklists.' },
+      { title: 'Form input styling', description: 'Validate placeholder and label text contrast against input field backgrounds.' },
+    ],
+    faqs: [
+      { question: 'What is WCAG AA?', answer: 'WCAG Level AA is the most commonly required accessibility standard. It requires a contrast ratio of at least 4.5:1 for normal text and 3:1 for large text (18pt+ regular or 14pt+ bold).' },
+      { question: 'What is WCAG AAA?', answer: 'WCAG Level AAA is the highest conformance level. It requires 7:1 for normal text and 4.5:1 for large text. AAA is recommended but not always legally required.' },
+      { question: 'How is the contrast ratio calculated?', answer: 'The ratio is (L1 + 0.05) / (L2 + 0.05) where L1 and L2 are the relative luminances of the lighter and darker colors, computed from sRGB values using the WCAG 2.x formula.' },
+      { question: 'What counts as large text?', answer: 'Large text is 18 point (24px) and larger at normal weight, or 14 point (18.67px) and larger at bold weight. Large text has lower contrast requirements because bigger glyphs are easier to read.' },
+      { question: 'Does contrast ratio apply to icons and UI components?', answer: 'WCAG also requires 3:1 contrast for UI components and graphical objects. This tool focuses on text contrast; use the 3:1 threshold as a guide for non-text elements.' },
+      { question: 'Can I use shorthand hex (#RGB)?', answer: 'Yes. Both #RGB and #RRGGBB formats are accepted. Shorthand hex is expanded automatically (e.g. #FFF → #FFFFFF).' },
+    ],
+    trustNote: 'Contrast calculations run in your browser — color values are never sent to any server.',
+  },
+
+  'data-size-converter': {
+    howToUse: {
+      steps: [
+        'Enter the numeric value on the first line.',
+        'Enter the source unit on the second line (e.g. MiB or GB).',
+        'Enter the target unit on the third line.',
+        'Optionally add "binary" or "decimal" on the fourth line to select the unit system.',
+        'Click "Convert Size" to see the result with exact precision.',
+      ],
+    },
+    expandedDescription: [
+      'Storage sizes are confusing because two competing standards exist. Binary units (KiB, MiB, GiB) use base 1024 — common in operating systems and memory specs. Decimal units (KB, MB, GB) use base 1000 — common in hard drive marketing and network bandwidth.',
+      'This converter lets you explicitly choose which system you are working in, then convert between any supported units. The exact value is always shown alongside a sensibly rounded result.',
+      'Understanding the binary vs decimal distinction prevents costly mistakes — a "1 TB" drive shows ~931 GiB in your OS because 1 terabyte (decimal) equals roughly 0.909 tebibytes (binary).',
+      'All calculations use JavaScript floating-point arithmetic and run entirely in your browser.',
+    ],
+    useCases: [
+      { title: 'Storage provisioning', description: 'Convert GiB requirements to TB when ordering cloud block storage billed in decimal units.' },
+      { title: 'Bandwidth estimation', description: 'Convert Mbps and file sizes to estimate download durations.' },
+      { title: 'Database sizing', description: 'Translate byte counts from pg_database_size() into human-readable GiB for capacity planning.' },
+      { title: 'Docker/K8s limits', description: 'Convert memory limits between MiB (Kubernetes) and MB (some monitoring dashboards).' },
+      { title: 'File upload validation', description: 'Verify that a 50 MiB upload limit equals approximately 52.4 MB in decimal terms.' },
+      { title: 'Backup capacity planning', description: 'Calculate total backup storage needed when source data is reported in mixed units.' },
+    ],
+    faqs: [
+      { question: 'What is the difference between KB and KiB?', answer: 'KB (kilobyte) is decimal: 1 KB = 1,000 bytes. KiB (kibibyte) is binary: 1 KiB = 1,024 bytes. The IEC introduced binary prefixes (KiB, MiB, GiB) to eliminate ambiguity.' },
+      { question: 'Which system should I use?', answer: 'Use binary (KiB/MiB/GiB) for RAM, file systems, and most OS-reported sizes. Use decimal (KB/MB/GB) for hard drive labels, network speeds, and SI-standard contexts.' },
+      { question: 'What units are supported?', answer: 'Binary: B, KiB, MiB, GiB, TiB. Decimal: B, KB, MB, GB, TB. Case is flexible for most units.' },
+      { question: 'Why does 1000 GB not equal 1 TB in binary?', answer: 'In decimal, 1000 GB = 1 TB exactly. In binary, 1 TB (decimal) ≈ 931 GiB because 1000³ / 1024³ ≈ 0.931.' },
+      { question: 'How is rounding handled?', answer: 'Results show a sensibly rounded primary value plus the full exact conversion on a secondary line for precision.' },
+      { question: 'Can I convert between binary and decimal systems?', answer: 'Pick the system that matches your input units. To cross systems, convert to bytes first by choosing the correct system, then convert again with the other system.' },
+    ],
+    trustNote: 'All size conversions run locally in your browser — no data is sent to any server.',
+  },
 };

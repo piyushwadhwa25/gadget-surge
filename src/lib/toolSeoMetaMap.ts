@@ -192,6 +192,22 @@ export const toolSeoMetaMap: Record<string, { title: string; description: string
     title: "PDF Splitter — Split PDF Files Online Free | GadgetSurge",
     description: "Free online PDF splitter. Split PDFs every N pages or by custom page ranges. Download separate files instantly. Runs in your browser.",
   },
+  "unix-timestamp-converter": {
+    title: "Unix Timestamp Converter — Epoch to Date Online Free | GadgetSurge",
+    description: "Convert Unix timestamps (seconds or milliseconds) to ISO 8601, UTC, local time, and relative time. Free online epoch converter.",
+  },
+  "cron-expression-calculator": {
+    title: "Cron Expression Calculator — Parse Cron Online Free | GadgetSurge",
+    description: "Parse standard 5-field cron expressions into human-readable schedules. See the next 5 run times. Free online cron calculator.",
+  },
+  "color-contrast-checker": {
+    title: "Color Contrast Calculator — WCAG Ratio Checker Free | GadgetSurge",
+    description: "Calculate WCAG contrast ratio between two hex colors. Check AA and AAA pass/fail for normal and large text. Free accessibility checker.",
+  },
+  "data-size-converter": {
+    title: "Data Size Converter — Bytes, KB, MB, GB Online Free | GadgetSurge",
+    description: "Convert storage units between binary (KiB, MiB, GiB) and decimal (KB, MB, GB) systems. Free online data size converter.",
+  },
 };
 
 export const toolSeoFallbackMeta = {

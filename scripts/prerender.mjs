@@ -44,8 +44,8 @@ const routeMeta = {
     canonical: `${BASE_URL}/category/document-tools`,
   },
   '/category/calculators': {
-    title: 'Free Online Calculators — GadgetSurge',
-    description: 'Free online calculators for everyday tasks. All calculators run directly in your browser with no signup required.',
+    title: 'Free Online Calculators — Timestamp, Cron, Contrast & Data Size | GadgetSurge',
+    description: 'Free developer calculators for Unix timestamps, cron expressions, WCAG color contrast, and storage unit conversion. All run in your browser.',
     canonical: `${BASE_URL}/category/calculators`,
   },
   '/tools/json-formatter': { title: 'JSON Formatter & Validator — Free Online Tool | GadgetSurge', description: 'Free online JSON formatter, validator, and beautifier. Paste your JSON to instantly format, validate, and prettify it. Supports minification and error detection.', canonical: `${BASE_URL}/tools/json-formatter` },
@@ -96,6 +96,10 @@ const routeMeta = {
   '/tools/pdf-merger': { title: 'PDF Merger — Combine PDF Files Online Free | GadgetSurge', description: 'Free online PDF merger. Combine multiple PDF files into one document, reorder before merging. Runs entirely in your browser — no upload required.', canonical: `${BASE_URL}/tools/pdf-merger` },
   '/tools/pdf-page-remover': { title: 'PDF Page Remover — Delete PDF Pages Online Free | GadgetSurge', description: 'Free online PDF page remover. Select pages to delete by number or range. Download the edited PDF instantly. 100% client-side processing.', canonical: `${BASE_URL}/tools/pdf-page-remover` },
   '/tools/pdf-splitter': { title: 'PDF Splitter — Split PDF Files Online Free | GadgetSurge', description: 'Free online PDF splitter. Split PDFs every N pages or by custom page ranges. Download separate files instantly. Runs in your browser.', canonical: `${BASE_URL}/tools/pdf-splitter` },
+  '/tools/unix-timestamp-converter': { title: 'Unix Timestamp Converter — Epoch to Date Online Free | GadgetSurge', description: 'Convert Unix timestamps (seconds or milliseconds) to ISO 8601, UTC, local time, and relative time. Free online epoch converter.', canonical: `${BASE_URL}/tools/unix-timestamp-converter` },
+  '/tools/cron-expression-calculator': { title: 'Cron Expression Calculator — Parse Cron Online Free | GadgetSurge', description: 'Parse standard 5-field cron expressions into human-readable schedules. See the next 5 run times. Free online cron calculator.', canonical: `${BASE_URL}/tools/cron-expression-calculator` },
+  '/tools/color-contrast-checker': { title: 'Color Contrast Calculator — WCAG Ratio Checker Free | GadgetSurge', description: 'Calculate WCAG contrast ratio between two hex colors. Check AA and AAA pass/fail for normal and large text. Free accessibility checker.', canonical: `${BASE_URL}/tools/color-contrast-checker` },
+  '/tools/data-size-converter': { title: 'Data Size Converter — Bytes, KB, MB, GB Online Free | GadgetSurge', description: 'Convert storage units between binary (KiB, MiB, GiB) and decimal (KB, MB, GB) systems. Free online data size converter.', canonical: `${BASE_URL}/tools/data-size-converter` },
 };
 
 const defaultMeta = {

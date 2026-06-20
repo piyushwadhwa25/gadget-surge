@@ -27,8 +27,8 @@ export default function CategoryPage() {
       description: "Free document tools including PDF merger, PDF splitter, page remover, and word counter. All tools run in your browser — no upload required.",
     },
     "calculators": {
-      title: "Free Online Calculators — GadgetSurge",
-      description: "Free online calculators for everyday tasks. All calculators run directly in your browser with no signup required.",
+      title: "Free Online Calculators — Timestamp, Cron, Contrast & Data Size | GadgetSurge",
+      description: "Free developer calculators for Unix timestamps, cron expressions, WCAG color contrast, and storage unit conversion. All run in your browser.",
     },
   };
 

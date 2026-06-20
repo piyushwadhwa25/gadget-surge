@@ -305,6 +305,7 @@ export function formatWordCount(input: string): string {
 
 // Re-export text tool processors
 import { textToolProcessors } from './text-tools';
+import { calculatorToolProcessors } from './calculator-tools';
 
 // Process function map for standard tools
 export const toolProcessors: Record<string, (input: string) => string> = {
@@ -321,4 +322,5 @@ export const toolProcessors: Record<string, (input: string) => string> = {
   'sql-formatter': formatSql,
   'word-counter': formatWordCount,
   ...textToolProcessors,
+  ...calculatorToolProcessors,
 };

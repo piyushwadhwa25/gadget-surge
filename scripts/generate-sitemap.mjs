@@ -62,6 +62,10 @@ const routes = [
   { path: '/tools/pdf-merger', priority: '0.9', changefreq: 'weekly' },
   { path: '/tools/pdf-page-remover', priority: '0.8', changefreq: 'weekly' },
   { path: '/tools/pdf-splitter', priority: '0.9', changefreq: 'weekly' },
+  { path: '/tools/unix-timestamp-converter', priority: '0.9', changefreq: 'weekly' },
+  { path: '/tools/cron-expression-calculator', priority: '0.8', changefreq: 'weekly' },
+  { path: '/tools/color-contrast-checker', priority: '0.8', changefreq: 'weekly' },
+  { path: '/tools/data-size-converter', priority: '0.8', changefreq: 'weekly' },
 ];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
