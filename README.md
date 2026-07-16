@@ -143,3 +143,7 @@ public/
 ```
 
 Built by [Piyush Wadhwa](https://www.gadgetsurge.com). Issues welcome on GitHub.
+
+## License
+
+[MIT](LICENSE)
