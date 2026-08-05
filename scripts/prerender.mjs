@@ -23,6 +23,16 @@ const routeMeta = {
     description: 'Browse all free online tools at GadgetSurge. Developer utilities, text tools, image converters, and everyday calculators. No signup, no login, runs in your browser.',
     canonical: `${BASE_URL}/tools`,
   },
+  '/about': {
+    title: 'About GadgetSurge — Free Browser-Based Online Tools',
+    description: 'Learn about GadgetSurge: a free collection of browser-based utilities for developers and creators. Built by an independent developer. No signup, no uploads — everything runs in your browser.',
+    canonical: `${BASE_URL}/about`,
+  },
+  '/contact': {
+    title: 'Contact GadgetSurge — Feedback, Bugs & Tool Suggestions',
+    description: 'Contact GadgetSurge for bug reports, tool suggestions, or general feedback. Reach out by email — usually a reply within a few days.',
+    canonical: `${BASE_URL}/contact`,
+  },
   '/category/developer-tools': {
     title: 'Free Developer Tools Online — JSON, Base64, UUID, Regex & More | GadgetSurge',
     description: 'Free online developer tools including JSON formatter, Base64 encoder/decoder, UUID generator, regex tester, JWT decoder, timestamp converter, and more.',

@@ -160,6 +160,8 @@ export function Layout() {
                 <li><Link to="/category/developer-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Developer Tools</Link></li>
                 <li><Link to="/category/text-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Text Tools</Link></li>
                 <li><Link to="/category/image-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Image Tools</Link></li>
+                <li><Link to="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">About</Link></li>
+                <li><Link to="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
               </ul>
             </div>
           </div>
