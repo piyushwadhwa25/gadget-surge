@@ -6,11 +6,11 @@ export const toolSeoMetaMap: Record<string, { title: string; description: string
   },
   "base64-encoder": {
     title: "Base64 Encoder — Free Online Text to Base64 | GadgetSurge",
-    description: "Free online Base64 encoder. Convert any text or string to Base64 instantly in your browser. No data sent to server. Fast and privacy-safe.",
+    description: "Free online Base64 encoder. Encode or convert any text or string to Base64 instantly in your browser. No data sent to server. Fast and privacy-safe.",
   },
   "base64-decoder": {
     title: "Base64 Decoder — Free Online Base64 to Text | GadgetSurge",
-    description: "Free online Base64 decoder. Convert Base64 encoded strings back to plain text instantly. Supports standard and URL-safe Base64. Runs in your browser.",
+    description: "Free online Base64 decoder. Decode or convert Base64 encoded strings back to plain text instantly. Supports standard and URL-safe Base64. Runs in your browser.",
   },
   "regex-tester": {
     title: "Regex Tester — Free Online Regular Expression Tester | GadgetSurge",
@@ -42,7 +42,7 @@ export const toolSeoMetaMap: Record<string, { title: string; description: string
   },
   "jwt-decoder": {
     title: "JWT Decoder — Free Online JSON Web Token Decoder | GadgetSurge",
-    description: "Free online JWT decoder. Decode and inspect JSON Web Token headers, payloads, and signatures without a secret key. Useful for debugging auth flows.",
+    description: "Free online JWT decoder. Decode and inspect JSON Web Token and JSON Web Signature (JWS) headers, payloads, and signatures without a secret key.",
   },
   "markdown-to-html": {
     title: "Markdown to HTML Converter — Free Online Tool | GadgetSurge",
@@ -150,7 +150,7 @@ export const toolSeoMetaMap: Record<string, { title: string; description: string
   },
   "webp-to-png": {
     title: "WebP to PNG Converter — Free Online Tool | GadgetSurge",
-    description: "Free online WebP to PNG converter. Convert WebP images to PNG format for broader compatibility. Runs in your browser with no server upload.",
+    description: "Convert WebP to PNG online free. Instant browser-based converter for broader compatibility — no upload, no signup required.",
   },
   "image-compressor": {
     title: "Image Compressor — Free Online Image Compression Tool | GadgetSurge",
