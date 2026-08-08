@@ -15,6 +15,7 @@ import ToolPage from "./pages/ToolPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import VisualDbBuilder from "./pages/VisualDbBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/app/visual-db-builder"
+                element={
+                  <ProtectedRoute>
+                    <VisualDbBuilder />
                   </ProtectedRoute>
                 }
               />
