@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import type { VercelRequest } from '@vercel/node';
-import { supabaseAdmin } from './supabaseAdmin';
+import { supabaseAdmin } from './supabaseAdmin.js';
 
 /**
  * Verifies the caller via Authorization: Bearer <access_token>.

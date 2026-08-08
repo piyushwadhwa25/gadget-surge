@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { Readable } from 'node:stream';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabaseAdmin } from './_lib/supabaseAdmin';
+import { supabaseAdmin } from './_lib/supabaseAdmin.js';
 
 /** Disable Vercel's JSON body parser so we can HMAC-verify the raw payload. */
 export const config = {

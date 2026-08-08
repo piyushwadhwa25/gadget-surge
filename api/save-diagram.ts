@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabaseAdmin } from './_lib/supabaseAdmin';
-import { verifyUser } from './_lib/verifyUser';
+import { supabaseAdmin } from './_lib/supabaseAdmin.js';
+import { verifyUser } from './_lib/verifyUser.js';
 
 type Plan = 'free' | 'premium';
 

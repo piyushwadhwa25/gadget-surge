@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
-import { verifyUser } from './_lib/verifyUser';
+import { verifyUser } from './_lib/verifyUser.js';
 
 /**
  * PLACEHOLDER: Premium plan price in paise (₹499.00).
