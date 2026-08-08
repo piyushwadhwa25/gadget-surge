@@ -11,6 +11,77 @@ type Entitlement = {
   status: string;
 };
 
+type CreateOrderResponse = {
+  orderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+};
+
+type RazorpayCheckoutOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  order_id: string;
+  name?: string;
+  description?: string;
+  handler: (response: { razorpay_payment_id: string; razorpay_order_id: string }) => void;
+  modal?: {
+    ondismiss?: () => void;
+  };
+};
+
+type RazorpayInstance = {
+  open: () => void;
+};
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => RazorpayInstance;
+  }
+}
+
+function loadRazorpayCheckoutScript(): Promise<void> {
+  if (typeof window !== 'undefined' && window.Razorpay) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[data-razorpay-checkout="true"]',
+    );
+    if (existing) {
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error('Failed to load Razorpay Checkout')), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.dataset.razorpayCheckout = 'true';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Razorpay Checkout'));
+    document.body.appendChild(script);
+  });
+}
+
+async function fetchEntitlement(accessToken: string): Promise<Entitlement> {
+  const response = await fetch('/api/entitlement', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const message =
+      (body && typeof body.error === 'string' && body.error) ||
+      `Failed to load entitlement (${response.status})`;
+    throw new Error(message);
+  }
+  return response.json() as Promise<Entitlement>;
+}
+
 export default function Dashboard() {
   const { user, session, signOut } = useAuth();
   const navigate = useNavigate();
@@ -19,6 +90,8 @@ export default function Dashboard() {
   const [entitlement, setEntitlement] = useState<Entitlement | null>(null);
   const [entitlementLoading, setEntitlementLoading] = useState(true);
   const [entitlementError, setEntitlementError] = useState<string | null>(null);
+  const [upgrading, setUpgrading] = useState(false);
+  const [paymentPendingMessage, setPaymentPendingMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const accessToken = session?.access_token;
@@ -32,19 +105,7 @@ export default function Dashboard() {
     setEntitlementLoading(true);
     setEntitlementError(null);
 
-    fetch('/api/entitlement', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          const body = await response.json().catch(() => null);
-          const message =
-            (body && typeof body.error === 'string' && body.error) ||
-            `Failed to load entitlement (${response.status})`;
-          throw new Error(message);
-        }
-        return response.json() as Promise<Entitlement>;
-      })
+    fetchEntitlement(accessToken)
       .then((data) => {
         if (!cancelled) {
           setEntitlement(data);
@@ -80,6 +141,83 @@ export default function Dashboard() {
 
     navigate('/login');
   };
+
+  const handleUpgrade = async () => {
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setError('You must be signed in to upgrade.');
+      return;
+    }
+
+    setError(null);
+    setPaymentPendingMessage(null);
+    setUpgrading(true);
+
+    try {
+      const response = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        const message =
+          (body && typeof body.error === 'string' && body.error) ||
+          `Failed to create order (${response.status})`;
+        throw new Error(message);
+      }
+
+      const order = (await response.json()) as CreateOrderResponse;
+      await loadRazorpayCheckoutScript();
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay Checkout failed to initialize');
+      }
+
+      const rzp = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.orderId,
+        name: 'GadgetSurge',
+        description: 'Premium plan',
+        handler: () => {
+          // Checkout success ≠ entitlement granted. Webhook is source of truth.
+          setPaymentPendingMessage('Payment successful, activating your account...');
+          setUpgrading(false);
+
+          window.setTimeout(() => {
+            void fetchEntitlement(accessToken)
+              .then((data) => {
+                setEntitlement(data);
+                setEntitlementError(null);
+                if (data.plan === 'premium') {
+                  setPaymentPendingMessage(null);
+                }
+              })
+              .catch((err: unknown) => {
+                setEntitlementError(
+                  err instanceof Error ? err.message : 'Failed to refresh entitlement',
+                );
+              });
+          }, 2500);
+        },
+        modal: {
+          ondismiss: () => {
+            setUpgrading(false);
+          },
+        },
+      });
+
+      rzp.open();
+    } catch (err: unknown) {
+      setUpgrading(false);
+      setError(err instanceof Error ? err.message : 'Failed to start checkout');
+    }
+  };
+
+  const showUpgrade =
+    !entitlementLoading && !entitlementError && entitlement?.plan === 'free';
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
@@ -119,10 +257,22 @@ export default function Dashboard() {
             )}
           </div>
 
+          {paymentPendingMessage && (
+            <p className="text-sm text-foreground" role="status">
+              {paymentPendingMessage}
+            </p>
+          )}
+
           {error && (
             <p className="text-sm text-destructive" role="alert">
               {error}
             </p>
+          )}
+
+          {showUpgrade && (
+            <Button type="button" onClick={handleUpgrade} disabled={upgrading}>
+              {upgrading ? 'Starting checkout…' : 'Upgrade to Premium'}
+            </Button>
           )}
 
           <Button
