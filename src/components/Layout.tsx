@@ -3,20 +3,25 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { trackPageView } from '@/lib/analytics';
 import { Sun, Moon, Menu, X, Zap } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { useAuth } from '@/contexts/AuthContext';
 import { SearchBar } from '@/components/SearchBar';
 import { AdPlaceholder } from '@/components/AdPlaceholder';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { categories, getPopularTools } from '@/lib/tools-registry';
 
-const navItems = [
+const navItems: { label: string; path: string; badge?: string }[] = [
   { label: 'Home', path: '/' },
   { label: 'Developer Tools', path: '/category/developer-tools' },
   { label: 'Text Tools', path: '/category/text-tools' },
   { label: 'Image Tools', path: '/category/image-tools' },
   { label: 'All Tools', path: '/tools' },
+  { label: 'Visual DB Builder', path: '/app/visual-db-builder', badge: 'Pro' },
 ];
 
 export function Layout() {
   const { isDark, toggle } = useDarkMode();
+  const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const popular = getPopularTools().slice(0, 6);
@@ -25,6 +30,11 @@ export function Layout() {
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
+
+  const handleSignOut = async () => {
+    setMobileMenuOpen(false);
+    await signOut();
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -44,15 +54,34 @@ export function Layout() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     location.pathname === item.path
                       ? 'text-primary bg-primary/10'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
                   {item.label}
+                  {item.badge && (
+                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Link>
               ))}
+              {user ? (
+                <>
+                  <Button asChild variant="outline" size="sm" className="ml-1">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Button asChild variant="outline" size="sm" className="ml-1">
+                  <Link to="/login">Log In</Link>
+                </Button>
+              )}
             </nav>
 
             <div className="flex items-center gap-2">
@@ -84,15 +113,45 @@ export function Layout() {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     location.pathname === item.path
                       ? 'text-primary bg-primary/10'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
                   {item.label}
+                  {item.badge && (
+                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Link>
               ))}
+              <div className="pt-2 space-y-2 border-t border-border">
+                {user ? (
+                  <>
+                    <Button asChild variant="outline" size="sm" className="w-full justify-center">
+                      <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                        Dashboard
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-center"
+                      onClick={handleSignOut}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <Button asChild variant="outline" size="sm" className="w-full justify-center">
+                    <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                      Log In
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -160,6 +219,14 @@ export function Layout() {
                 <li><Link to="/category/developer-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Developer Tools</Link></li>
                 <li><Link to="/category/text-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Text Tools</Link></li>
                 <li><Link to="/category/image-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Image Tools</Link></li>
+                <li><Link to="/app/visual-db-builder" className="text-sm text-muted-foreground hover:text-primary transition-colors">Visual DB Builder</Link></li>
+                <li>
+                  {user ? (
+                    <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</Link>
+                  ) : (
+                    <Link to="/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">Log In</Link>
+                  )}
+                </li>
                 <li><Link to="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">About</Link></li>
                 <li><Link to="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
               </ul>
