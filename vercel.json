@@ -56,6 +56,11 @@
       ]
     }
   ],
+  "functions": {
+    "api/**/*": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/tools/:slug",
@@ -66,7 +71,7 @@
       "destination": "/category/:slug/index.html"
     },
     {
-      "source": "/((?!ads\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.json|favicon\\.ico|favicon\\.png).*)",
+      "source": "/((?!api(?:/|$)|ads\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.json|favicon\\.ico|favicon\\.png).*)",
       "destination": "/index.html"
     }
   ]

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -6,11 +6,66 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 
+type Entitlement = {
+  plan: 'free' | 'premium';
+  status: string;
+};
+
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, session, signOut } = useAuth();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [entitlement, setEntitlement] = useState<Entitlement | null>(null);
+  const [entitlementLoading, setEntitlementLoading] = useState(true);
+  const [entitlementError, setEntitlementError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      setEntitlement(null);
+      setEntitlementLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setEntitlementLoading(true);
+    setEntitlementError(null);
+
+    fetch('/api/entitlement', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          const message =
+            (body && typeof body.error === 'string' && body.error) ||
+            `Failed to load entitlement (${response.status})`;
+          throw new Error(message);
+        }
+        return response.json() as Promise<Entitlement>;
+      })
+      .then((data) => {
+        if (!cancelled) {
+          setEntitlement(data);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setEntitlement(null);
+          setEntitlementError(err instanceof Error ? err.message : 'Failed to load entitlement');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setEntitlementLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
 
   const handleSignOut = async () => {
     setError(null);
@@ -47,6 +102,22 @@ export default function Dashboard() {
             Signed in as{' '}
             <span className="font-medium text-foreground">{user?.email ?? 'unknown'}</span>
           </p>
+
+          <div className="text-sm text-muted-foreground">
+            {entitlementLoading && <p>Loading plan…</p>}
+            {!entitlementLoading && entitlementError && (
+              <p className="text-destructive" role="alert">
+                {entitlementError}
+              </p>
+            )}
+            {!entitlementLoading && !entitlementError && entitlement && (
+              <p>
+                Current plan:{' '}
+                <span className="font-medium text-foreground">{entitlement.plan}</span>
+                <span className="text-muted-foreground"> ({entitlement.status})</span>
+              </p>
+            )}
+          </div>
 
           {error && (
             <p className="text-sm text-destructive" role="alert">
