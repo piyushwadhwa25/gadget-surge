@@ -117,6 +117,7 @@ function createTableNode(index: number): TableFlowNode {
   return {
     id: crypto.randomUUID(),
     type: 'table',
+    dragHandle: '.drag-handle__table-node',
     position: { x: 80 + index * 36, y: 80 + index * 36 },
     data: {
       tableName: `table_${index + 1}`,

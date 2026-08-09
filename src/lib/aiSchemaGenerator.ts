@@ -442,6 +442,7 @@ export function schemaToNodesAndEdges(
     const node: TableFlowNode = {
       id: crypto.randomUUID(),
       type: 'table',
+      dragHandle: '.drag-handle__table-node',
       position: {
         x: 80 + (layoutIndex % gridCols) * colWidth,
         y: 80 + Math.floor(layoutIndex / gridCols) * rowHeight,

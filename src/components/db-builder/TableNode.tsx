@@ -6,7 +6,7 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from '@xyflow/react';
-import { ChevronDown, ChevronRight, Copy, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -90,6 +90,7 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
     const clone: TableFlowNode = {
       id: crypto.randomUUID(),
       type: 'table',
+      dragHandle: '.drag-handle__table-node',
       position: {
         x: original.position.x + 40,
         y: original.position.y + 40,
@@ -116,6 +117,14 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
   return (
     <div className="w-[340px] rounded-md border border-border bg-card text-card-foreground shadow-sm">
       <div className="flex items-center gap-1.5 border-b border-border bg-muted/40 px-2 py-2">
+        <div
+          className="drag-handle__table-node flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
+          aria-label="Drag table"
+          title="Drag table"
+        >
+          <GripVertical className="h-4 w-4" />
+        </div>
         <Button
           type="button"
           variant="ghost"
