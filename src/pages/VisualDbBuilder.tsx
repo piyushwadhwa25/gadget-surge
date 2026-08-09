@@ -14,12 +14,14 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cloud, Copy, FolderOpen, Plus, Database, Save, Trash2 } from 'lucide-react';
+import { Cloud, Copy, FolderOpen, Plus, Database, Redo2, Save, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { TableNode, createColumn } from '@/components/db-builder/TableNode';
 import { serializeDiagram } from '@/components/db-builder/serializeDiagram';
 import type { TableFlowNode } from '@/components/db-builder/types';
+import { generatePrisma } from '@/lib/generatePrisma';
 import { generateSql } from '@/lib/generateSql';
+import { useDiagramHistory } from '@/hooks/useDiagramHistory';
 import {
   deleteDiagramLocal,
   listDiagramsLocal,
@@ -45,6 +47,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const nodeTypes = { table: TableNode };
 
@@ -52,6 +55,8 @@ type Entitlement = {
   plan: 'free' | 'premium';
   status: string;
 };
+
+type ExportFormat = 'sql' | 'prisma';
 
 function createTableNode(index: number): TableFlowNode {
   return {
@@ -61,6 +66,7 @@ function createTableNode(index: number): TableFlowNode {
     data: {
       tableName: `table_${index + 1}`,
       columns: [createColumn({ name: 'id', type: 'UUID', isPrimaryKey: true })],
+      isCollapsed: false,
     },
   };
 }
@@ -84,7 +90,9 @@ function VisualDbBuilderCanvas() {
   const navigate = useNavigate();
   const [nodes, setNodes, onNodesChange] = useNodesState<TableFlowNode>([createTableNode(0)]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [sqlOpen, setSqlOpen] = useState(false);
+  const { undo, redo, canUndo, canRedo } = useDiagramHistory(nodes, edges, setNodes, setEdges);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('sql');
   const [copied, setCopied] = useState(false);
   const [diagramId, setDiagramId] = useState<string | null>(null);
   const [diagramName, setDiagramName] = useState('');
@@ -98,7 +106,10 @@ function VisualDbBuilderCanvas() {
   const [diagramsLoading, setDiagramsLoading] = useState(false);
   const [cloudPrompt, setCloudPrompt] = useState<'login' | 'upgrade' | null>(null);
 
-  const sql = useMemo(() => generateSql(nodes, edges), [nodes, edges]);
+  const exportText = useMemo(
+    () => (exportFormat === 'prisma' ? generatePrisma(nodes, edges) : generateSql(nodes, edges)),
+    [nodes, edges, exportFormat],
+  );
 
   const loadDiagrams = useCallback(async () => {
     setDiagramsLoading(true);
@@ -124,8 +135,8 @@ function VisualDbBuilderCanvas() {
     setNodes((current) => [...current, createTableNode(current.length)]);
   };
 
-  const copySql = async () => {
-    await navigator.clipboard.writeText(sql);
+  const copyExport = async () => {
+    await navigator.clipboard.writeText(exportText);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
   };
@@ -308,6 +319,26 @@ function VisualDbBuilderCanvas() {
           <Button
             type="button"
             variant="outline"
+            size="icon"
+            onClick={undo}
+            disabled={!canUndo}
+            aria-label="Undo"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={redo}
+            disabled={!canRedo}
+            aria-label="Redo"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => {
               setMyDiagramsOpen(true);
               void loadDiagrams();
@@ -324,8 +355,8 @@ function VisualDbBuilderCanvas() {
             <Save className="h-4 w-4" />
             {saving ? 'Saving…' : 'Save'}
           </Button>
-          <Button type="button" onClick={() => setSqlOpen(true)}>
-            Export SQL
+          <Button type="button" onClick={() => setExportOpen(true)}>
+            Export
           </Button>
           <div className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
           <Button
@@ -340,7 +371,7 @@ function VisualDbBuilderCanvas() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -355,22 +386,40 @@ function VisualDbBuilderCanvas() {
           <Controls />
           <MiniMap pannable zoomable />
         </ReactFlow>
+        <div className="pointer-events-none absolute bottom-3 left-14 z-10 rounded-md border border-border bg-background/95 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
+          {nodes.length} Tables · {edges.length} Relations
+        </div>
       </div>
 
-      <Dialog open={sqlOpen} onOpenChange={setSqlOpen}>
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Exported SQL</DialogTitle>
+            <DialogTitle>
+              {exportFormat === 'prisma' ? 'Exported Prisma schema' : 'Exported SQL'}
+            </DialogTitle>
             <DialogDescription>
-              CREATE TABLE statements for each table, plus ALTER TABLE foreign keys for each
-              relationship (source column → referenced column).
+              {exportFormat === 'prisma'
+                ? 'Prisma model blocks for each table, with relations derived from foreign-key edges (source column → referenced column).'
+                : 'CREATE TABLE statements for each table, plus ALTER TABLE foreign keys for each relationship (source column → referenced column).'}
             </DialogDescription>
           </DialogHeader>
+          <Tabs
+            value={exportFormat}
+            onValueChange={(value) => {
+              setExportFormat(value as ExportFormat);
+              setCopied(false);
+            }}
+          >
+            <TabsList>
+              <TabsTrigger value="sql">SQL</TabsTrigger>
+              <TabsTrigger value="prisma">Prisma</TabsTrigger>
+            </TabsList>
+          </Tabs>
           <pre className="max-h-[50vh] overflow-auto rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed">
-            <code>{sql}</code>
+            <code>{exportText}</code>
           </pre>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={copySql}>
+            <Button type="button" variant="outline" onClick={copyExport}>
               <Copy className="h-4 w-4" />
               {copied ? 'Copied' : 'Copy to Clipboard'}
             </Button>

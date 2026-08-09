@@ -10,11 +10,14 @@ function quoteIdent(name: string): string {
   return `"${cleaned.replace(/"/g, '""')}"`;
 }
 
-function isTableNode(node: Node): node is Node<TableNodeData, 'table'> {
+export function isTableNode(node: Node): node is Node<TableNodeData, 'table'> {
   return node.type === 'table' && !!node.data && typeof node.data === 'object' && 'columns' in node.data;
 }
 
-function findColumn(columns: ColumnDef[], handleId: string | null | undefined): ColumnDef | undefined {
+export function findColumn(
+  columns: ColumnDef[],
+  handleId: string | null | undefined,
+): ColumnDef | undefined {
   const columnId = columnIdFromHandleId(handleId);
   if (!columnId) return undefined;
   return columns.find((c) => c.id === columnId);

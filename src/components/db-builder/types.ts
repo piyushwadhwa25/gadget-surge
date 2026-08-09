@@ -22,6 +22,8 @@ export type ColumnDef = {
 export type TableNodeData = {
   tableName: string;
   columns: ColumnDef[];
+  /** When true, column list is hidden; persists via serializeDiagram. */
+  isCollapsed?: boolean;
 };
 
 export type TableFlowNode = Node<TableNodeData, 'table'>;
