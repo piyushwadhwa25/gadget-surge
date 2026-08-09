@@ -14,8 +14,9 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cloud, Copy, FolderOpen, Plus, Database, Redo2, Save, Trash2, Undo2 } from 'lucide-react';
+import { Cloud, Copy, FolderOpen, Plus, Database, Redo2, Save, Sparkles, Trash2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { AiAgentDialog } from '@/components/db-builder/AiAgentDialog';
 import { TableNode, createColumn } from '@/components/db-builder/TableNode';
 import { serializeDiagram } from '@/components/db-builder/serializeDiagram';
 import type { TableFlowNode } from '@/components/db-builder/types';
@@ -105,6 +106,7 @@ function VisualDbBuilderCanvas() {
   const [diagrams, setDiagrams] = useState<LocalDiagram[]>([]);
   const [diagramsLoading, setDiagramsLoading] = useState(false);
   const [cloudPrompt, setCloudPrompt] = useState<'login' | 'upgrade' | null>(null);
+  const [aiAgentOpen, setAiAgentOpen] = useState(false);
 
   const exportText = useMemo(
     () => (exportFormat === 'prisma' ? generatePrisma(nodes, edges) : generateSql(nodes, edges)),
@@ -351,6 +353,10 @@ function VisualDbBuilderCanvas() {
             <Plus className="h-4 w-4" />
             Add Table
           </Button>
+          <Button type="button" variant="outline" onClick={() => setAiAgentOpen(true)}>
+            <Sparkles className="h-4 w-4" />
+            AI Agent
+          </Button>
           <Button type="button" variant="outline" onClick={handleSaveClick} disabled={saving}>
             <Save className="h-4 w-4" />
             {saving ? 'Saving…' : 'Save'}
@@ -390,6 +396,16 @@ function VisualDbBuilderCanvas() {
           {nodes.length} Tables · {edges.length} Relations
         </div>
       </div>
+
+      <AiAgentDialog
+        open={aiAgentOpen}
+        onOpenChange={setAiAgentOpen}
+        existingNodeCount={nodes.length}
+        onApply={(newNodes, newEdges) => {
+          setNodes((current) => [...current, ...newNodes]);
+          setEdges((current) => [...current, ...newEdges]);
+        }}
+      />
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-2xl">
