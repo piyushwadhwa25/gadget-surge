@@ -5,7 +5,6 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { SeoSection } from '@/components/SeoSection';
 import { RelatedTools } from '@/components/RelatedTools';
 import { CategoryPopular } from '@/components/CategoryPopular';
-import { AdPlaceholder } from '@/components/AdPlaceholder';
 import { trackEvent } from '@/lib/analytics';
 
 interface ToolPageTemplateProps {
@@ -36,11 +35,6 @@ export function ToolPageTemplate({ tool, children }: ToolPageTemplateProps) {
       {/* Tool Interface */}
       <div style={{ minHeight: '280px' }}>
         {children}
-      </div>
-
-      {/* Ad Placeholder - Below Tool */}
-      <div className="mt-8">
-        <AdPlaceholder />
       </div>
 
       {/* SEO Content */}

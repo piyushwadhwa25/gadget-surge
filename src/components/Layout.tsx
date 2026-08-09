@@ -1,28 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { trackPageView } from '@/lib/analytics';
-import { Sun, Moon, Menu, X, Zap } from 'lucide-react';
+import { Sun, Moon, Menu, X, Zap, ChevronDown } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { useAuth } from '@/contexts/AuthContext';
 import { SearchBar } from '@/components/SearchBar';
-import { AdPlaceholder } from '@/components/AdPlaceholder';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
 import { categories, getPopularTools } from '@/lib/tools-registry';
-
-const navItems: { label: string; path: string; badge?: string }[] = [
-  { label: 'Home', path: '/' },
-  { label: 'Developer Tools', path: '/category/developer-tools' },
-  { label: 'Text Tools', path: '/category/text-tools' },
-  { label: 'Image Tools', path: '/category/image-tools' },
-  { label: 'All Tools', path: '/tools' },
-  { label: 'Visual DB Builder', path: '/app/visual-db-builder', badge: 'Free' },
-];
+import { cn } from '@/lib/utils';
 
 export function Layout() {
   const { isDark, toggle } = useDarkMode();
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileFreeToolsOpen, setMobileFreeToolsOpen] = useState(false);
   const location = useLocation();
   const popular = getPopularTools().slice(0, 6);
 
@@ -35,6 +36,12 @@ export function Layout() {
     setMobileMenuOpen(false);
     await signOut();
   };
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  const isActive = (path: string) => location.pathname === path;
+  const isCategoryActive = location.pathname.startsWith('/category/');
+  const isFreeToolsActive = isCategoryActive || location.pathname === '/tools';
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -50,24 +57,101 @@ export function Layout() {
             </Link>
 
             <nav className="hidden lg:flex items-center gap-1">
-              {navItems.map(item => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === item.path
-                      ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  {item.label}
-                  {item.badge && (
-                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Link>
-              ))}
+              <NavigationMenu>
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        to="/"
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          'bg-transparent h-auto',
+                          isActive('/')
+                            ? 'text-primary bg-primary/10'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                        )}
+                      >
+                        Home
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger
+                      className={cn(
+                        'bg-transparent h-auto',
+                        isFreeToolsActive
+                          ? 'text-primary bg-primary/10'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                      )}
+                    >
+                      Free Tools
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-[240px] gap-1 p-2">
+                        {categories.map(cat => (
+                          <li key={cat.slug}>
+                            <NavigationMenuLink asChild>
+                              <Link
+                                to={`/category/${cat.slug}`}
+                                className={cn(
+                                  'flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+                                  isActive(`/category/${cat.slug}`)
+                                    ? 'text-primary bg-primary/10'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                                )}
+                              >
+                                <span>{cat.name}</span>
+                                {cat.comingSoon && (
+                                  <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
+                                    Soon
+                                  </Badge>
+                                )}
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        ))}
+                        <li className="mt-1 border-t border-border pt-1">
+                          <NavigationMenuLink asChild>
+                            <Link
+                              to="/tools"
+                              className={cn(
+                                'block rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                                isActive('/tools')
+                                  ? 'text-primary bg-primary/10'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                              )}
+                            >
+                              All Tools
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        to="/app/visual-db-builder"
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          'bg-transparent h-auto gap-1.5',
+                          isActive('/app/visual-db-builder')
+                            ? 'text-primary bg-primary/10'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                        )}
+                      >
+                        Visual DB Builder
+                        <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
+                          Free
+                        </Badge>
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
+
               {user ? (
                 <>
                   <Button asChild variant="outline" size="sm" className="ml-1">
@@ -107,31 +191,102 @@ export function Layout() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-border bg-background">
             <div className="container mx-auto px-4 py-4 space-y-2">
-              <SearchBar className="mb-3" onSelect={() => setMobileMenuOpen(false)} />
-              {navItems.map(item => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === item.path
+              <SearchBar className="mb-3" onSelect={closeMobileMenu} />
+
+              <Link
+                to="/"
+                onClick={closeMobileMenu}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  isActive('/')
+                    ? 'text-primary bg-primary/10'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                )}
+              >
+                Home
+              </Link>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMobileFreeToolsOpen(open => !open)}
+                  className={cn(
+                    'flex w-full items-center justify-between gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                    isFreeToolsActive
                       ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  {item.label}
-                  {item.badge && (
-                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
-                      {item.badge}
-                    </Badge>
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted',
                   )}
-                </Link>
-              ))}
+                  aria-expanded={mobileFreeToolsOpen}
+                >
+                  Free Tools
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 transition-transform',
+                      mobileFreeToolsOpen && 'rotate-180',
+                    )}
+                  />
+                </button>
+                {mobileFreeToolsOpen && (
+                  <div className="mt-1 ml-2 space-y-1 border-l border-border pl-2">
+                    {categories.map(cat => (
+                      <Link
+                        key={cat.slug}
+                        to={`/category/${cat.slug}`}
+                        onClick={closeMobileMenu}
+                        className={cn(
+                          'flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors',
+                          isActive(`/category/${cat.slug}`)
+                            ? 'text-primary bg-primary/10'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                        )}
+                      >
+                        <span>{cat.name}</span>
+                        {cat.comingSoon && (
+                          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
+                            Soon
+                          </Badge>
+                        )}
+                      </Link>
+                    ))}
+                    <div className="border-t border-border pt-1">
+                      <Link
+                        to="/tools"
+                        onClick={closeMobileMenu}
+                        className={cn(
+                          'block px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                          isActive('/tools')
+                            ? 'text-primary bg-primary/10'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                        )}
+                      >
+                        All Tools
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to="/app/visual-db-builder"
+                onClick={closeMobileMenu}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  isActive('/app/visual-db-builder')
+                    ? 'text-primary bg-primary/10'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                )}
+              >
+                Visual DB Builder
+                <Badge variant="secondary" className="px-1.5 py-0 text-[10px] leading-4">
+                  Free
+                </Badge>
+              </Link>
+
               <div className="pt-2 space-y-2 border-t border-border">
                 {user ? (
                   <>
                     <Button asChild variant="outline" size="sm" className="w-full justify-center">
-                      <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                      <Link to="/dashboard" onClick={closeMobileMenu}>
                         Dashboard
                       </Link>
                     </Button>
@@ -146,7 +301,7 @@ export function Layout() {
                   </>
                 ) : (
                   <Button asChild variant="outline" size="sm" className="w-full justify-center">
-                    <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                    <Link to="/login" onClick={closeMobileMenu}>
                       Log In
                     </Link>
                   </Button>
@@ -157,17 +312,9 @@ export function Layout() {
         )}
       </header>
 
-      <div className="container mx-auto px-4 py-3">
-        <AdPlaceholder />
-      </div>
-
       <main className="flex-1">
         <Outlet />
       </main>
-
-      <div className="container mx-auto px-4 py-3">
-        <AdPlaceholder />
-      </div>
 
       {/* Footer */}
       <footer className="border-t border-border bg-card">
@@ -215,11 +362,16 @@ export function Layout() {
             <div>
               <h4 className="font-semibold text-card-foreground mb-3">Quick Links</h4>
               <ul className="space-y-2">
-                <li><Link to="/tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">All Tools</Link></li>
-                <li><Link to="/category/developer-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Developer Tools</Link></li>
-                <li><Link to="/category/text-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Text Tools</Link></li>
-                <li><Link to="/category/image-tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">Image Tools</Link></li>
-                <li><Link to="/app/visual-db-builder" className="text-sm text-muted-foreground hover:text-primary transition-colors">Visual DB Builder</Link></li>
+                <li>
+                  <Link to="/tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Free Tools
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/app/visual-db-builder" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Visual DB Builder
+                  </Link>
+                </li>
                 <li>
                   {user ? (
                     <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</Link>
