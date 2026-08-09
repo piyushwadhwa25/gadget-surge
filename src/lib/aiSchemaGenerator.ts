@@ -99,23 +99,120 @@ const RESPONSE_JSON_SCHEMA = {
   },
 } as const;
 
-function normalizeSqlType(raw: string): SqlType {
+export type NormalizeSqlTypeResult = {
+  type: SqlType;
+  /** True when the raw type was unrecognized and mapped to the default VARCHAR(255). */
+  usedFallback: boolean;
+};
+
+/**
+ * Maps a raw SQL type string onto the builder's SqlType union.
+ * Explicit aliases (INT → INTEGER, CHAR(n) → VARCHAR(255), etc.) are not fallbacks;
+ * only truly unrecognized types set usedFallback.
+ */
+export function normalizeSqlTypeDetailed(raw: string): NormalizeSqlTypeResult {
   const trimmed = raw.trim();
+  if (!trimmed) {
+    return { type: 'VARCHAR(255)', usedFallback: true };
+  }
+
   const exact = SQL_TYPES.find((t) => t === trimmed);
-  if (exact) return exact;
+  if (exact) return { type: exact, usedFallback: false };
 
   const upper = trimmed.toUpperCase();
   const byUpper = SQL_TYPES.find((t) => t.toUpperCase() === upper);
-  if (byUpper) return byUpper;
+  if (byUpper) return { type: byUpper, usedFallback: false };
 
-  if (upper.startsWith('VARCHAR')) return 'VARCHAR(255)';
-  if (upper === 'INT' || upper === 'INT4' || upper === 'SERIAL') return 'INTEGER';
-  if (upper === 'BOOL') return 'BOOLEAN';
-  if (upper === 'DATETIME' || upper === 'DATE') return 'TIMESTAMP';
-  if (upper === 'NUMERIC' || upper === 'FLOAT' || upper === 'DOUBLE') return 'DECIMAL';
-  if (upper === 'STRING' || upper === 'CHAR') return 'VARCHAR(255)';
+  // Character / string families (order matters: CHARACTER VARYING before CHAR)
+  if (
+    upper.startsWith('VARCHAR') ||
+    upper.startsWith('CHARACTER VARYING') ||
+    upper.startsWith('NVARCHAR')
+  ) {
+    return { type: 'VARCHAR(255)', usedFallback: false };
+  }
+  if (
+    upper === 'CHAR' ||
+    upper.startsWith('CHAR(') ||
+    upper === 'CHARACTER' ||
+    upper.startsWith('CHARACTER(') ||
+    upper === 'NCHAR' ||
+    upper.startsWith('NCHAR(') ||
+    upper === 'STRING'
+  ) {
+    return { type: 'VARCHAR(255)', usedFallback: false };
+  }
 
-  return 'VARCHAR(255)';
+  // Integer family
+  if (
+    upper === 'INT' ||
+    upper === 'INT2' ||
+    upper === 'INT4' ||
+    upper === 'INT8' ||
+    upper === 'TINYINT' ||
+    upper === 'SMALLINT' ||
+    upper === 'MEDIUMINT' ||
+    upper === 'BIGINT' ||
+    upper === 'SERIAL' ||
+    upper === 'SMALLSERIAL' ||
+    upper === 'BIGSERIAL' ||
+    upper.startsWith('INT(') ||
+    upper.startsWith('INTEGER(')
+  ) {
+    return { type: 'INTEGER', usedFallback: false };
+  }
+
+  // Boolean
+  if (upper === 'BOOL') {
+    return { type: 'BOOLEAN', usedFallback: false };
+  }
+
+  // Temporal
+  if (
+    upper === 'DATETIME' ||
+    upper === 'DATE' ||
+    upper === 'TIME' ||
+    upper.startsWith('TIMESTAMP') ||
+    upper.startsWith('TIMESTAMPTZ')
+  ) {
+    return { type: 'TIMESTAMP', usedFallback: false };
+  }
+
+  // Numeric / floating
+  if (
+    upper === 'NUMERIC' ||
+    upper.startsWith('NUMERIC(') ||
+    upper === 'FLOAT' ||
+    upper.startsWith('FLOAT(') ||
+    upper === 'DOUBLE' ||
+    upper.startsWith('DOUBLE') ||
+    upper === 'REAL' ||
+    upper.startsWith('DECIMAL')
+  ) {
+    return { type: 'DECIMAL', usedFallback: false };
+  }
+
+  // TEXT-family variants (exact TEXT already handled above)
+  if (
+    upper === 'TINYTEXT' ||
+    upper === 'MEDIUMTEXT' ||
+    upper === 'LONGTEXT' ||
+    upper === 'CLOB' ||
+    upper.startsWith('TEXT(')
+  ) {
+    return { type: 'TEXT', usedFallback: false };
+  }
+
+  // UUID-ish
+  if (upper === 'UNIQUEIDENTIFIER' || upper === 'GUID') {
+    return { type: 'UUID', usedFallback: false };
+  }
+
+  return { type: 'VARCHAR(255)', usedFallback: true };
+}
+
+export function normalizeSqlType(raw: string): SqlType {
+  return normalizeSqlTypeDetailed(raw).type;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -19,6 +19,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Cloud,
   Copy,
+  FileInput,
   FolderOpen,
   ImageDown,
   LayoutGrid,
@@ -36,6 +37,7 @@ import { AiAgentDialog } from '@/components/db-builder/AiAgentDialog';
 import { TableNode, createColumn } from '@/components/db-builder/TableNode';
 import { serializeDiagram } from '@/components/db-builder/serializeDiagram';
 import type { TableFlowNode } from '@/components/db-builder/types';
+import { schemaToNodesAndEdges } from '@/lib/aiSchemaGenerator';
 import { getLayoutedNodes } from '@/lib/autoLayout';
 import { generatePrisma } from '@/lib/generatePrisma';
 import { generateSql } from '@/lib/generateSql';
@@ -50,6 +52,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -166,6 +169,10 @@ function VisualDbBuilderCanvas() {
   const [diagramsLoading, setDiagramsLoading] = useState(false);
   const [cloudPrompt, setCloudPrompt] = useState<'login' | 'upgrade' | null>(null);
   const [aiAgentOpen, setAiAgentOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importSqlText, setImportSqlText] = useState('');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const exportText = useMemo(
     () => (exportFormat === 'prisma' ? generatePrisma(nodes, edges) : generateSql(nodes, edges)),
@@ -379,6 +386,48 @@ function VisualDbBuilderCanvas() {
     }
   };
 
+  const handleImportSql = async () => {
+    setImportError(null);
+    setImporting(true);
+    try {
+      const { importSql } = await import('@/lib/importSql');
+      const { schema, fallbackColumns } = importSql(importSqlText);
+      const { nodes: newNodes, edges: newEdges } = schemaToNodesAndEdges(schema, nodes.length);
+      if (newNodes.length === 0) {
+        throw new Error('No tables were imported from the pasted SQL.');
+      }
+
+      applyChange([...nodes, ...newNodes], [...edges, ...newEdges]);
+      setImportOpen(false);
+      setImportSqlText('');
+      toast.success(
+        `Imported ${newNodes.length} table${newNodes.length === 1 ? '' : 's'}${
+          newEdges.length > 0
+            ? ` and ${newEdges.length} relation${newEdges.length === 1 ? '' : 's'}`
+            : ''
+        }`,
+      );
+
+      if (fallbackColumns.length > 0) {
+        const sample = fallbackColumns
+          .slice(0, 3)
+          .map((col) => `${col.table}.${col.column} (${col.rawType})`)
+          .join(', ');
+        const more =
+          fallbackColumns.length > 3 ? ` and ${fallbackColumns.length - 3} more` : '';
+        toast.warning(
+          `${fallbackColumns.length} column type${
+            fallbackColumns.length === 1 ? '' : 's'
+          } approximated as VARCHAR(255): ${sample}${more}`,
+        );
+      }
+    } catch (err: unknown) {
+      setImportError(err instanceof Error ? err.message : 'Failed to import SQL.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleLoadDiagram = (item: LocalDiagram) => {
     const loadedNodes = Array.isArray(item.data?.nodes) ? (item.data.nodes as TableFlowNode[]) : [];
     const loadedEdges = Array.isArray(item.data?.edges) ? (item.data.edges as Edge[]) : [];
@@ -467,6 +516,17 @@ function VisualDbBuilderCanvas() {
             <Save className="h-4 w-4" />
             {saving ? 'Saving…' : 'Save'}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setImportError(null);
+              setImportOpen(true);
+            }}
+          >
+            <FileInput className="h-4 w-4" />
+            Import
+          </Button>
           <Button type="button" onClick={() => setExportOpen(true)}>
             Export
           </Button>
@@ -550,6 +610,56 @@ function VisualDbBuilderCanvas() {
           setEdges((current) => [...current, ...newEdges]);
         }}
       />
+
+      <Dialog
+        open={importOpen}
+        onOpenChange={(open) => {
+          setImportOpen(open);
+          if (!open) setImportError(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileInput className="h-5 w-5 text-primary" />
+              Import SQL
+            </DialogTitle>
+            <DialogDescription>
+              Paste CREATE TABLE statements (and optional ALTER TABLE foreign keys). Tables are
+              added to the canvas without replacing what you already have.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-1">
+            <Label htmlFor="import-sql">SQL</Label>
+            <Textarea
+              id="import-sql"
+              value={importSqlText}
+              onChange={(e) => setImportSqlText(e.target.value)}
+              placeholder={`CREATE TABLE "users" (\n  "id" UUID,\n  "email" VARCHAR(255),\n  PRIMARY KEY ("id")\n);`}
+              className="min-h-[220px] font-mono text-xs"
+              disabled={importing}
+            />
+            {importError && (
+              <p className="text-sm text-destructive" role="alert">
+                {importError}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setImportOpen(false)}
+              disabled={importing}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void handleImportSql()} disabled={importing}>
+              {importing ? 'Importing…' : 'Import'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-2xl">
