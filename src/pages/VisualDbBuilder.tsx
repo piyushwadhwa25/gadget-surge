@@ -48,6 +48,7 @@ import {
   saveDiagramLocal,
   type LocalDiagram,
 } from '@/lib/localDiagramStore';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,7 +78,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+const CLOUD_TOOL_SLUG = 'visual-db-builder';
+
+type CloudDiagramMeta = {
+  id: string;
+  name: string;
+  updated_at: string;
+};
+
+type CloudListGate = 'ready' | 'login' | 'upgrade';
 
 const EXPORT_CHROME_CLASSES = [
   'react-flow__controls',
@@ -166,8 +177,12 @@ function VisualDbBuilderCanvas() {
   const [syncing, setSyncing] = useState(false);
   const [exportingImage, setExportingImage] = useState(false);
   const [myDiagramsOpen, setMyDiagramsOpen] = useState(false);
+  const [diagramsTab, setDiagramsTab] = useState<'local' | 'cloud'>('local');
   const [diagrams, setDiagrams] = useState<LocalDiagram[]>([]);
   const [diagramsLoading, setDiagramsLoading] = useState(false);
+  const [cloudDiagrams, setCloudDiagrams] = useState<CloudDiagramMeta[]>([]);
+  const [cloudDiagramsLoading, setCloudDiagramsLoading] = useState(false);
+  const [cloudListGate, setCloudListGate] = useState<CloudListGate>('ready');
   const [cloudPrompt, setCloudPrompt] = useState<'login' | 'upgrade' | null>(null);
   const [aiAgentOpen, setAiAgentOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -192,6 +207,48 @@ function VisualDbBuilderCanvas() {
       setDiagramsLoading(false);
     }
   }, []);
+
+  const loadCloudDiagrams = useCallback(async () => {
+    setCloudDiagramsLoading(true);
+    try {
+      if (!session?.access_token) {
+        setCloudListGate('login');
+        setCloudDiagrams([]);
+        return;
+      }
+
+      const entitlement = await fetchEntitlement(session.access_token);
+      if (entitlement.plan !== 'premium') {
+        setCloudListGate('upgrade');
+        setCloudDiagrams([]);
+        return;
+      }
+
+      setCloudListGate('ready');
+      const { data, error } = await supabase
+        .from('workspace_data')
+        .select('id, name, updated_at')
+        .eq('tool_slug', CLOUD_TOOL_SLUG)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setCloudDiagrams(
+        (data ?? []).map((row) => ({
+          id: String(row.id),
+          name: typeof row.name === 'string' ? row.name : 'Untitled diagram',
+          updated_at: typeof row.updated_at === 'string' ? row.updated_at : '',
+        })),
+      );
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load cloud diagrams');
+      setCloudDiagrams([]);
+    } finally {
+      setCloudDiagramsLoading(false);
+    }
+  }, [session?.access_token]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -440,6 +497,52 @@ function VisualDbBuilderCanvas() {
     toast.success(`Loaded “${item.name}”`);
   };
 
+  const handleLoadCloudDiagram = async (item: CloudDiagramMeta) => {
+    try {
+      const { data: row, error } = await supabase
+        .from('workspace_data')
+        .select('id, name, data')
+        .eq('id', item.id)
+        .eq('tool_slug', CLOUD_TOOL_SLUG)
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+      if (!row) {
+        throw new Error('Diagram not found in cloud');
+      }
+
+      const payload =
+        row.data && typeof row.data === 'object' && !Array.isArray(row.data)
+          ? (row.data as { nodes?: unknown; edges?: unknown })
+          : null;
+      const loadedNodes = Array.isArray(payload?.nodes)
+        ? (payload.nodes as TableFlowNode[])
+        : [];
+      const loadedEdges = Array.isArray(payload?.edges) ? (payload.edges as Edge[]) : [];
+      const name = typeof row.name === 'string' ? row.name : item.name;
+      const cloudId = String(row.id);
+
+      setNodes(loadedNodes);
+      setEdges(loadedEdges);
+      setDiagramId(cloudId);
+      setDiagramName(name);
+
+      await saveDiagramLocal({
+        id: cloudId,
+        name,
+        data: serializeDiagram(loadedNodes, loadedEdges),
+      });
+
+      setMyDiagramsOpen(false);
+      toast.success(`Loaded “${name}”`);
+      void loadDiagrams();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load cloud diagram');
+    }
+  };
+
   const handleDeleteDiagram = async (item: LocalDiagram) => {
     try {
       await deleteDiagramLocal(item.id);
@@ -451,6 +554,25 @@ function VisualDbBuilderCanvas() {
       void loadDiagrams();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete diagram');
+    }
+  };
+
+  const handleDeleteCloudDiagram = async (item: CloudDiagramMeta) => {
+    try {
+      const { error } = await supabase
+        .from('workspace_data')
+        .delete()
+        .eq('id', item.id)
+        .eq('tool_slug', CLOUD_TOOL_SLUG);
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Cloud diagram deleted');
+      void loadCloudDiagrams();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete cloud diagram');
     }
   };
 
@@ -499,7 +621,11 @@ function VisualDbBuilderCanvas() {
             variant="outline"
             onClick={() => {
               setMyDiagramsOpen(true);
-              void loadDiagrams();
+              if (diagramsTab === 'cloud') {
+                void loadCloudDiagrams();
+              } else {
+                void loadDiagrams();
+              }
             }}
           >
             <FolderOpen className="h-4 w-4" />
@@ -780,44 +906,126 @@ function VisualDbBuilderCanvas() {
           <SheetHeader>
             <SheetTitle>My Diagrams</SheetTitle>
             <SheetDescription>
-              Diagrams saved in this browser. Load one to continue editing, or delete it.
+              Local diagrams stay in this browser. Cloud diagrams sync across devices for premium
+              accounts.
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-6 space-y-2">
-            {diagramsLoading && (
-              <p className="text-sm text-muted-foreground">Loading diagrams…</p>
-            )}
-            {!diagramsLoading && diagrams.length === 0 && (
-              <p className="text-sm text-muted-foreground">No saved diagrams yet.</p>
-            )}
-            {!diagramsLoading &&
-              diagrams.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-2 rounded-md border border-border px-3 py-2"
-                >
-                  <button
-                    type="button"
-                    className="min-w-0 flex-1 text-left"
-                    onClick={() => handleLoadDiagram(item)}
+          <Tabs
+            value={diagramsTab}
+            onValueChange={(value) => {
+              const next = value === 'cloud' ? 'cloud' : 'local';
+              setDiagramsTab(next);
+              if (next === 'cloud') {
+                void loadCloudDiagrams();
+              } else {
+                void loadDiagrams();
+              }
+            }}
+            className="mt-6"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="local">Local</TabsTrigger>
+              <TabsTrigger value="cloud">Cloud</TabsTrigger>
+            </TabsList>
+            <TabsContent value="local" className="mt-4 space-y-2">
+              {diagramsLoading && (
+                <p className="text-sm text-muted-foreground">Loading diagrams…</p>
+              )}
+              {!diagramsLoading && diagrams.length === 0 && (
+                <p className="text-sm text-muted-foreground">No saved diagrams yet.</p>
+              )}
+              {!diagramsLoading &&
+                diagrams.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2 rounded-md border border-border px-3 py-2"
                   >
-                    <div className="truncate text-sm font-medium text-foreground">{item.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Updated {new Date(item.updatedAt).toLocaleString()}
-                    </div>
-                  </button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Delete ${item.name}`}
-                    onClick={() => void handleDeleteDiagram(item)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 text-left"
+                      onClick={() => handleLoadDiagram(item)}
+                    >
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {item.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Updated {new Date(item.updatedAt).toLocaleString()}
+                      </div>
+                    </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${item.name}`}
+                      onClick={() => void handleDeleteDiagram(item)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+            </TabsContent>
+            <TabsContent value="cloud" className="mt-4 space-y-2">
+              {cloudListGate === 'login' && (
+                <div className="space-y-3 rounded-md border border-border px-3 py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Log in to see your synced diagrams.
+                  </p>
+                  <Button type="button" asChild>
+                    <Link to="/login">Log in</Link>
                   </Button>
                 </div>
-              ))}
-          </div>
+              )}
+              {cloudListGate === 'upgrade' && (
+                <div className="space-y-3 rounded-md border border-border px-3 py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Cloud sync is a premium feature. Upgrade to sync diagrams across devices.
+                  </p>
+                  <Button type="button" asChild>
+                    <Link to="/dashboard">Upgrade</Link>
+                  </Button>
+                </div>
+              )}
+              {cloudListGate === 'ready' && cloudDiagramsLoading && (
+                <p className="text-sm text-muted-foreground">Loading diagrams…</p>
+              )}
+              {cloudListGate === 'ready' && !cloudDiagramsLoading && cloudDiagrams.length === 0 && (
+                <p className="text-sm text-muted-foreground">No synced diagrams yet.</p>
+              )}
+              {cloudListGate === 'ready' &&
+                !cloudDiagramsLoading &&
+                cloudDiagrams.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-2 rounded-md border border-border px-3 py-2"
+                  >
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 text-left"
+                      onClick={() => void handleLoadCloudDiagram(item)}
+                    >
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {item.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Updated{' '}
+                        {item.updated_at
+                          ? new Date(item.updated_at).toLocaleString()
+                          : '—'}
+                      </div>
+                    </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete ${item.name}`}
+                      onClick={() => void handleDeleteCloudDiagram(item)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+            </TabsContent>
+          </Tabs>
         </SheetContent>
       </Sheet>
     </div>
