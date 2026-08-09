@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -197,10 +197,11 @@ async function fetchEntitlement(accessToken: string): Promise<Entitlement> {
 }
 
 function VisualDbBuilderCanvas() {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const navigate = useNavigate();
   const { fitView, getNodes } = useReactFlow();
   const flowWrapperRef = useRef<HTMLDivElement>(null);
+  const previousUserIdRef = useRef<string | undefined>(undefined);
   const [nodes, setNodes, onNodesChange] = useNodesState<TableFlowNode>([createTableNode(0)]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { undo, redo, applyChange, canUndo, canRedo } = useDiagramHistory(
@@ -234,11 +235,37 @@ function VisualDbBuilderCanvas() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
 
+  useEffect(() => {
+    const nextUserId = user?.id;
+    const previousUserId = previousUserIdRef.current;
+    // Skip initial mount (ref still undefined). Reset only when leaving a real session
+    // (sign-out or switch to a different user id).
+    if (
+      previousUserId !== undefined &&
+      previousUserId !== null &&
+      previousUserId !== nextUserId
+    ) {
+      setNodes([createTableNode(0)]);
+      setEdges([]);
+      setDiagramId(null);
+      setDiagramName('');
+    }
+    previousUserIdRef.current = nextUserId;
+  }, [user?.id, setNodes, setEdges]);
+
   const exportText = useMemo(() => {
     if (exportFormat === 'prisma') return generatePrisma(nodes, edges);
     if (exportFormat === 'sql') return generateSql(nodes, edges);
     return '';
   }, [nodes, edges, exportFormat]);
+
+  const visibleLocalDiagrams = useMemo(
+    () =>
+      diagrams.filter(
+        (item) => item.linkedUserId === undefined || item.linkedUserId === user?.id,
+      ),
+    [diagrams, user?.id],
+  );
 
   const loadDiagrams = useCallback(async () => {
     setDiagramsLoading(true);
@@ -464,6 +491,16 @@ function VisualDbBuilderCanvas() {
         throw new Error(message);
       }
 
+      if (user?.id) {
+        await saveDiagramLocal({
+          id,
+          name,
+          data: serializeDiagram(nodes, edges),
+          linkedUserId: user.id,
+        });
+        void loadDiagrams();
+      }
+
       toast.success('Diagram synced to cloud');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to sync diagram');
@@ -618,6 +655,7 @@ function VisualDbBuilderCanvas() {
         id: cloudId,
         name,
         data: serializeDiagram(loadedNodes, loadedEdges),
+        ...(user?.id ? { linkedUserId: user.id } : {}),
       });
 
       setMyDiagramsOpen(false);
@@ -1031,11 +1069,11 @@ function VisualDbBuilderCanvas() {
               {diagramsLoading && (
                 <p className="text-sm text-muted-foreground">Loading diagrams…</p>
               )}
-              {!diagramsLoading && diagrams.length === 0 && (
+              {!diagramsLoading && visibleLocalDiagrams.length === 0 && (
                 <p className="text-sm text-muted-foreground">No saved diagrams yet.</p>
               )}
               {!diagramsLoading &&
-                diagrams.map((item) => (
+                visibleLocalDiagrams.map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center gap-2 rounded-md border border-border px-3 py-2"

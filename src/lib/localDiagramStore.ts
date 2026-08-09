@@ -6,6 +6,8 @@ export type LocalDiagram = {
   name: string;
   data: SerializedDiagram;
   updatedAt: string;
+  /** Set when this local row was synced/loaded from a cloud account. Untagged = pure local. */
+  linkedUserId?: string;
 };
 
 class LocalDiagramDatabase extends Dexie {
@@ -25,11 +27,15 @@ export async function saveDiagramLocal(
   diagram: Omit<LocalDiagram, 'id' | 'updatedAt'> & { id?: string },
 ): Promise<LocalDiagram> {
   const id = diagram.id ?? crypto.randomUUID();
+  const existing = diagram.id ? await db.diagrams.get(id) : undefined;
+  const linkedUserId =
+    diagram.linkedUserId !== undefined ? diagram.linkedUserId : existing?.linkedUserId;
   const record: LocalDiagram = {
     id,
     name: diagram.name,
     data: diagram.data,
     updatedAt: new Date().toISOString(),
+    ...(linkedUserId !== undefined ? { linkedUserId } : {}),
   };
   await db.diagrams.put(record);
   return record;
