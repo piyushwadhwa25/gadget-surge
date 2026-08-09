@@ -332,19 +332,13 @@ export function Layout() {
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-card-foreground mb-3">Categories</h4>
+              <h4 className="font-semibold text-card-foreground mb-3">Free Tools</h4>
               <ul className="space-y-2">
-                {categories.map(cat => (
-                  <li key={cat.slug}>
-                    <Link
-                      to={`/category/${cat.slug}`}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {cat.name}
-                      {cat.comingSoon && <span className="ml-1 text-accent text-xs">(Soon)</span>}
-                    </Link>
-                  </li>
-                ))}
+                <li>
+                  <Link to="/tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    All Tools
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -362,11 +356,6 @@ export function Layout() {
             <div>
               <h4 className="font-semibold text-card-foreground mb-3">Quick Links</h4>
               <ul className="space-y-2">
-                <li>
-                  <Link to="/tools" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Free Tools
-                  </Link>
-                </li>
                 <li>
                   <Link to="/app/visual-db-builder" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     Visual DB Builder

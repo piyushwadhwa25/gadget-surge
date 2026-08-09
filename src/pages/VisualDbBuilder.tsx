@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -8,18 +8,35 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Connection,
   type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { toPng, toSvg } from 'html-to-image';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cloud, Copy, FolderOpen, Plus, Database, Redo2, Save, Sparkles, Trash2, Undo2 } from 'lucide-react';
+import {
+  Cloud,
+  Copy,
+  FolderOpen,
+  ImageDown,
+  LayoutGrid,
+  MoreHorizontal,
+  Plus,
+  Database,
+  Redo2,
+  Save,
+  Sparkles,
+  Trash2,
+  Undo2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { AiAgentDialog } from '@/components/db-builder/AiAgentDialog';
 import { TableNode, createColumn } from '@/components/db-builder/TableNode';
 import { serializeDiagram } from '@/components/db-builder/serializeDiagram';
 import type { TableFlowNode } from '@/components/db-builder/types';
+import { getLayoutedNodes } from '@/lib/autoLayout';
 import { generatePrisma } from '@/lib/generatePrisma';
 import { generateSql } from '@/lib/generateSql';
 import { useDiagramHistory } from '@/hooks/useDiagramHistory';
@@ -42,6 +59,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -49,6 +75,31 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+const EXPORT_CHROME_CLASSES = [
+  'react-flow__controls',
+  'react-flow__minimap',
+  'react-flow__panel',
+  'react-flow__attribution',
+  'db-builder-chrome',
+];
+
+function isExportChromeNode(node: HTMLElement): boolean {
+  if (!node?.classList) return false;
+  return EXPORT_CHROME_CLASSES.some((className) => node.classList.contains(className));
+}
+
+function sanitizeFilename(name: string): string {
+  const cleaned = name.trim().replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '');
+  return cleaned || 'schema-diagram';
+}
+
+function downloadDataUrl(dataUrl: string, filename: string) {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = dataUrl;
+  link.click();
+}
 
 const nodeTypes = { table: TableNode };
 
@@ -89,9 +140,16 @@ async function fetchEntitlement(accessToken: string): Promise<Entitlement> {
 function VisualDbBuilderCanvas() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { fitView } = useReactFlow();
+  const flowWrapperRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<TableFlowNode>([createTableNode(0)]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { undo, redo, canUndo, canRedo } = useDiagramHistory(nodes, edges, setNodes, setEdges);
+  const { undo, redo, applyChange, canUndo, canRedo } = useDiagramHistory(
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+  );
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('sql');
   const [copied, setCopied] = useState(false);
@@ -102,6 +160,7 @@ function VisualDbBuilderCanvas() {
   const [nameDialogMode, setNameDialogMode] = useState<'save' | 'cloud-sync'>('save');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [exportingImage, setExportingImage] = useState(false);
   const [myDiagramsOpen, setMyDiagramsOpen] = useState(false);
   const [diagrams, setDiagrams] = useState<LocalDiagram[]>([]);
   const [diagramsLoading, setDiagramsLoading] = useState(false);
@@ -135,6 +194,53 @@ function VisualDbBuilderCanvas() {
 
   const addTable = () => {
     setNodes((current) => [...current, createTableNode(current.length)]);
+  };
+
+  const handleTidyUp = () => {
+    if (nodes.length === 0) {
+      toast.error('Add a table before tidying up');
+      return;
+    }
+    const layouted = getLayoutedNodes(nodes, edges, 'TB');
+    applyChange(layouted, edges);
+    window.requestAnimationFrame(() => {
+      void fitView({ padding: 0.16, duration: 300 });
+    });
+    toast.success('Diagram tidied up');
+  };
+
+  const handleExportImage = async (format: 'png' | 'svg') => {
+    const flowEl = flowWrapperRef.current?.querySelector('.react-flow') as HTMLElement | null;
+    if (!flowEl) {
+      toast.error('Canvas not ready to export');
+      return;
+    }
+
+    setExportingImage(true);
+    try {
+      const filter = (node: HTMLElement) => !isExportChromeNode(node);
+      const basename = sanitizeFilename(diagramName || 'schema-diagram');
+      const dataUrl =
+        format === 'png'
+          ? await toPng(flowEl, {
+              filter,
+              cacheBust: true,
+              pixelRatio: 2,
+              backgroundColor: '#ffffff',
+            })
+          : await toSvg(flowEl, {
+              filter,
+              cacheBust: true,
+              backgroundColor: '#ffffff',
+            });
+
+      downloadDataUrl(dataUrl, `${basename}.${format}`);
+      toast.success(`Exported ${format.toUpperCase()}`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to export image');
+    } finally {
+      setExportingImage(false);
+    }
   };
 
   const copyExport = async () => {
@@ -364,6 +470,40 @@ function VisualDbBuilderCanvas() {
           <Button type="button" onClick={() => setExportOpen(true)}>
             Export
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" aria-label="More actions">
+                <MoreHorizontal className="h-4 w-4" />
+                More
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onSelect={handleTidyUp}>
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Tidy Up
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger disabled={exportingImage}>
+                  <ImageDown className="mr-2 h-4 w-4" />
+                  {exportingImage ? 'Exporting…' : 'Export Image'}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    disabled={exportingImage}
+                    onSelect={() => void handleExportImage('png')}
+                  >
+                    PNG
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={exportingImage}
+                    onSelect={() => void handleExportImage('svg')}
+                  >
+                    SVG
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
           <Button
             type="button"
@@ -377,7 +517,7 @@ function VisualDbBuilderCanvas() {
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1">
+      <div ref={flowWrapperRef} className="relative min-h-0 flex-1">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -386,13 +526,17 @@ function VisualDbBuilderCanvas() {
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView
+          // Default is Backspace only; include Delete. Library skips when focus is in
+          // INPUT/SELECT/TEXTAREA via isInputDOMNode (typing table/column names is safe).
+          // Connected edges are removed automatically by getElementsToRemove.
+          deleteKeyCode={['Backspace', 'Delete']}
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={18} size={1} />
           <Controls />
           <MiniMap pannable zoomable />
         </ReactFlow>
-        <div className="pointer-events-none absolute bottom-3 left-14 z-10 rounded-md border border-border bg-background/95 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
+        <div className="db-builder-chrome pointer-events-none absolute bottom-3 left-14 z-10 rounded-md border border-border bg-background/95 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
           {nodes.length} Tables · {edges.length} Relations
         </div>
       </div>

@@ -150,9 +150,30 @@ export function useDiagramHistory(
     setEdges(structuredClone(next.edges));
   }, [future, nodes, edges, setNodes, setEdges, clearTextDebounce]);
 
+  /**
+   * Apply a diagram mutation as a single undoable step (e.g. auto-layout).
+   * Pushes the current state to past immediately, then replaces nodes/edges
+   * without the position-debounce path creating a second history entry.
+   */
+  const applyChange = useCallback(
+    (nextNodes: TableFlowNode[], nextEdges: Edge[]) => {
+      const present = cloneSnapshot(nodes, edges);
+      const next = cloneSnapshot(nextNodes, nextEdges);
+      if (snapshotsEqual(present, next)) return;
+
+      clearTextDebounce();
+      pushPast(present);
+      applyingRef.current = true;
+      setNodes(structuredClone(next.nodes));
+      setEdges(structuredClone(next.edges));
+    },
+    [nodes, edges, setNodes, setEdges, clearTextDebounce, pushPast],
+  );
+
   return {
     undo,
     redo,
+    applyChange,
     canUndo: past.length > 0,
     canRedo: future.length > 0,
   };

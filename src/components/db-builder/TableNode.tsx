@@ -6,7 +6,7 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from '@xyflow/react';
-import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -42,7 +42,7 @@ function createColumn(partial?: Partial<ColumnDef>): ColumnDef {
 }
 
 export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
-  const { updateNodeData, setEdges } = useReactFlow();
+  const { updateNodeData, setEdges, setNodes, getNode } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const isCollapsed = !!data.isCollapsed;
 
@@ -83,6 +83,34 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
     updateNodeData(id, { isCollapsed: !isCollapsed });
   };
 
+  const duplicateTable = () => {
+    const original = getNode(id) as TableFlowNode | undefined;
+    if (!original) return;
+
+    const clone: TableFlowNode = {
+      id: crypto.randomUUID(),
+      type: 'table',
+      position: {
+        x: original.position.x + 40,
+        y: original.position.y + 40,
+      },
+      data: {
+        tableName: `${original.data.tableName}_copy`,
+        columns: original.data.columns.map((col) =>
+          createColumn({
+            name: col.name,
+            type: col.type,
+            isPrimaryKey: col.isPrimaryKey,
+          }),
+        ),
+        isCollapsed: !!original.data.isCollapsed,
+      },
+    };
+
+    // Edges are intentionally not copied — the clone starts unconnected.
+    setNodes((current) => [...current, clone]);
+  };
+
   const fieldCountLabel = `${data.columns.length} Fields`;
 
   return (
@@ -110,6 +138,16 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
           placeholder="table_name"
           aria-label="Table name"
         />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground"
+          onClick={duplicateTable}
+          aria-label="Duplicate table"
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </Button>
       </div>
 
       {isCollapsed ? (
