@@ -79,7 +79,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CLOUD_TOOL_SLUG = 'visual-db-builder';
 const EXPORT_IMAGE_WIDTH = 1024;
