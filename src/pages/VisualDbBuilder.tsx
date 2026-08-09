@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AiAgentDialog } from '@/components/db-builder/AiAgentDialog';
+import { DeletableEdge } from '@/components/db-builder/DeletableEdge';
 import { TableNode, createColumn } from '@/components/db-builder/TableNode';
 import { serializeDiagram } from '@/components/db-builder/serializeDiagram';
 import type { TableFlowNode } from '@/components/db-builder/types';
@@ -116,6 +117,7 @@ function downloadDataUrl(dataUrl: string, filename: string) {
 }
 
 const nodeTypes = { table: TableNode };
+const edgeTypes = { default: DeletableEdge };
 
 type Entitlement = {
   plan: 'free' | 'premium';
@@ -712,6 +714,7 @@ function VisualDbBuilderCanvas() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           // Default is Backspace only; include Delete. Library skips when focus is in
           // INPUT/SELECT/TEXTAREA via isInputDOMNode (typing table/column names is safe).

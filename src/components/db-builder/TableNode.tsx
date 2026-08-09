@@ -42,7 +42,7 @@ function createColumn(partial?: Partial<ColumnDef>): ColumnDef {
 }
 
 export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
-  const { updateNodeData, setEdges, setNodes, getNode } = useReactFlow();
+  const { updateNodeData, setEdges, setNodes, getNode, deleteElements } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   const isCollapsed = !!data.isCollapsed;
 
@@ -112,6 +112,10 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
     setNodes((current) => [...current, clone]);
   };
 
+  const deleteTable = () => {
+    void deleteElements({ nodes: [{ id }] });
+  };
+
   const fieldCountLabel = `${data.columns.length} Fields`;
 
   return (
@@ -156,6 +160,16 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
           aria-label="Duplicate table"
         >
           <Copy className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+          onClick={deleteTable}
+          aria-label="Delete table"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
 
