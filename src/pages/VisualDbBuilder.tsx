@@ -104,6 +104,10 @@ function isExportChromeNode(node: HTMLElement): boolean {
   return EXPORT_CHROME_CLASSES.some((className) => node.classList.contains(className));
 }
 
+function isWatermarkNode(node: HTMLElement): boolean {
+  return Boolean(node?.classList?.contains('db-builder-watermark'));
+}
+
 function sanitizeFilename(name: string): string {
   const cleaned = name.trim().replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '');
   return cleaned || 'schema-diagram';
@@ -285,7 +289,18 @@ function VisualDbBuilderCanvas() {
 
     setExportingImage(true);
     try {
-      const filter = (node: HTMLElement) => !isExportChromeNode(node);
+      let plan: Entitlement['plan'] = 'free';
+      if (session?.access_token) {
+        try {
+          const entitlement = await fetchEntitlement(session.access_token);
+          plan = entitlement.plan;
+        } catch {
+          plan = 'free';
+        }
+      }
+
+      const filter = (node: HTMLElement) =>
+        !isExportChromeNode(node) && !(isWatermarkNode(node) && plan === 'premium');
       const basename = sanitizeFilename(diagramName || 'schema-diagram');
       const dataUrl =
         format === 'png'
@@ -725,6 +740,12 @@ function VisualDbBuilderCanvas() {
           <Background gap={18} size={1} />
           <Controls />
           <MiniMap pannable zoomable />
+          <div
+            className="db-builder-watermark pointer-events-none absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/30 select-none"
+            aria-hidden
+          >
+            Made with GadgetSurge — gadgetsurge.com
+          </div>
         </ReactFlow>
         <div className="db-builder-chrome pointer-events-none absolute bottom-3 left-14 z-10 rounded-md border border-border bg-background/95 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
           {nodes.length} Tables · {edges.length} Relations
