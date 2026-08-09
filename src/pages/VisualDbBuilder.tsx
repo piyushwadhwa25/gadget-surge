@@ -5,7 +5,10 @@ import {
   Background,
   Controls,
   MiniMap,
+  ViewportPortal,
   addEdge,
+  getNodesBounds,
+  getViewportForBounds,
   useNodesState,
   useEdgesState,
   useReactFlow,
@@ -13,7 +16,7 @@ import {
   type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { toPng, toSvg } from 'html-to-image';
+import { toJpeg, toPng, toSvg } from 'html-to-image';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -67,9 +70,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -79,9 +79,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CLOUD_TOOL_SLUG = 'visual-db-builder';
+const EXPORT_IMAGE_WIDTH = 1024;
+const EXPORT_IMAGE_HEIGHT = 768;
+const WATERMARK_TEXT = 'Made with GadgetSurge — gadgetsurge.com';
 
 type CloudDiagramMeta = {
   id: string;
@@ -128,7 +131,42 @@ type Entitlement = {
   status: string;
 };
 
-type ExportFormat = 'sql' | 'prisma';
+type ExportFormat = 'sql' | 'prisma' | 'png' | 'svg' | 'jpeg';
+type ImageExportFormat = 'png' | 'svg' | 'jpeg';
+
+function isImageExportFormat(format: ExportFormat): format is ImageExportFormat {
+  return format === 'png' || format === 'svg' || format === 'jpeg';
+}
+
+function DbBuilderWatermark({ nodes }: { nodes: TableFlowNode[] }) {
+  const bounds =
+    nodes.length > 0
+      ? getNodesBounds(nodes)
+      : { x: 0, y: 0, width: 0, height: 0 };
+
+  return (
+    <ViewportPortal>
+      <div
+        className="db-builder-watermark pointer-events-none select-none"
+        style={{
+          position: 'absolute',
+          left: bounds.x + Math.max(bounds.width, 200),
+          top: bounds.y + bounds.height + 14,
+          transform: 'translateX(-100%)',
+          zIndex: 10,
+          fontSize: '12px',
+          lineHeight: 1.2,
+          // Explicit color so export (white background) stays legible regardless of theme tokens.
+          color: 'rgba(63, 63, 70, 0.62)',
+          whiteSpace: 'nowrap',
+        }}
+        aria-hidden
+      >
+        {WATERMARK_TEXT}
+      </div>
+    </ViewportPortal>
+  );
+}
 
 function createTableNode(index: number): TableFlowNode {
   return {
@@ -161,7 +199,7 @@ async function fetchEntitlement(accessToken: string): Promise<Entitlement> {
 function VisualDbBuilderCanvas() {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const { fitView } = useReactFlow();
+  const { fitView, getNodes } = useReactFlow();
   const flowWrapperRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<TableFlowNode>([createTableNode(0)]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -196,10 +234,11 @@ function VisualDbBuilderCanvas() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
 
-  const exportText = useMemo(
-    () => (exportFormat === 'prisma' ? generatePrisma(nodes, edges) : generateSql(nodes, edges)),
-    [nodes, edges, exportFormat],
-  );
+  const exportText = useMemo(() => {
+    if (exportFormat === 'prisma') return generatePrisma(nodes, edges);
+    if (exportFormat === 'sql') return generateSql(nodes, edges);
+    return '';
+  }, [nodes, edges, exportFormat]);
 
   const loadDiagrams = useCallback(async () => {
     setDiagramsLoading(true);
@@ -280,10 +319,22 @@ function VisualDbBuilderCanvas() {
     toast.success('Diagram tidied up');
   };
 
-  const handleExportImage = async (format: 'png' | 'svg') => {
-    const flowEl = flowWrapperRef.current?.querySelector('.react-flow') as HTMLElement | null;
-    if (!flowEl) {
+  const handleExportImage = async (format: ImageExportFormat) => {
+    // Official @xyflow/react download-image recipe: capture `.react-flow__viewport`
+    // (edges + nodes live inside it), fit all nodes via getNodesBounds +
+    // getViewportForBounds, and apply the transform through html-to-image's
+    // `style` option (clone-only — live canvas viewport is not mutated).
+    const viewportEl = flowWrapperRef.current?.querySelector(
+      '.react-flow__viewport',
+    ) as HTMLElement | null;
+    if (!viewportEl) {
       toast.error('Canvas not ready to export');
+      return;
+    }
+
+    const measuredNodes = getNodes();
+    if (measuredNodes.length === 0) {
+      toast.error('Add a table before exporting an image');
       return;
     }
 
@@ -299,24 +350,41 @@ function VisualDbBuilderCanvas() {
         }
       }
 
+      const nodesBounds = getNodesBounds(measuredNodes);
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        EXPORT_IMAGE_WIDTH,
+        EXPORT_IMAGE_HEIGHT,
+        0.5,
+        2,
+        0.16,
+      );
+
       const filter = (node: HTMLElement) =>
         !isExportChromeNode(node) && !(isWatermarkNode(node) && plan === 'premium');
+
+      const exportOptions = {
+        filter,
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        width: EXPORT_IMAGE_WIDTH,
+        height: EXPORT_IMAGE_HEIGHT,
+        style: {
+          width: `${EXPORT_IMAGE_WIDTH}px`,
+          height: `${EXPORT_IMAGE_HEIGHT}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      };
+
       const basename = sanitizeFilename(diagramName || 'schema-diagram');
       const dataUrl =
         format === 'png'
-          ? await toPng(flowEl, {
-              filter,
-              cacheBust: true,
-              pixelRatio: 2,
-              backgroundColor: '#ffffff',
-            })
-          : await toSvg(flowEl, {
-              filter,
-              cacheBust: true,
-              backgroundColor: '#ffffff',
-            });
+          ? await toPng(viewportEl, { ...exportOptions, pixelRatio: 2 })
+          : format === 'jpeg'
+            ? await toJpeg(viewportEl, { ...exportOptions, pixelRatio: 2, quality: 0.92 })
+            : await toSvg(viewportEl, exportOptions);
 
-      downloadDataUrl(dataUrl, `${basename}.${format}`);
+      downloadDataUrl(dataUrl, `${basename}.${format === 'jpeg' ? 'jpg' : format}`);
       toast.success(`Exported ${format.toUpperCase()}`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to export image');
@@ -671,7 +739,13 @@ function VisualDbBuilderCanvas() {
             <FileInput className="h-4 w-4" />
             Import
           </Button>
-          <Button type="button" onClick={() => setExportOpen(true)}>
+          <Button
+            type="button"
+            onClick={() => {
+              setCopied(false);
+              setExportOpen(true);
+            }}
+          >
             Export
           </Button>
           <DropdownMenu>
@@ -686,26 +760,6 @@ function VisualDbBuilderCanvas() {
                 <LayoutGrid className="mr-2 h-4 w-4" />
                 Tidy Up
               </DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger disabled={exportingImage}>
-                  <ImageDown className="mr-2 h-4 w-4" />
-                  {exportingImage ? 'Exporting…' : 'Export Image'}
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem
-                    disabled={exportingImage}
-                    onSelect={() => void handleExportImage('png')}
-                  >
-                    PNG
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={exportingImage}
-                    onSelect={() => void handleExportImage('svg')}
-                  >
-                    SVG
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
@@ -740,12 +794,7 @@ function VisualDbBuilderCanvas() {
           <Background gap={18} size={1} />
           <Controls />
           <MiniMap pannable zoomable />
-          <div
-            className="db-builder-watermark pointer-events-none absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/30 select-none"
-            aria-hidden
-          >
-            Made with GadgetSurge — gadgetsurge.com
-          </div>
+          <DbBuilderWatermark nodes={nodes} />
         </ReactFlow>
         <div className="db-builder-chrome pointer-events-none absolute bottom-3 left-14 z-10 rounded-md border border-border bg-background/95 px-2.5 py-1 text-xs text-muted-foreground shadow-sm">
           {nodes.length} Tables · {edges.length} Relations
@@ -816,12 +865,18 @@ function VisualDbBuilderCanvas() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {exportFormat === 'prisma' ? 'Exported Prisma schema' : 'Exported SQL'}
+              {exportFormat === 'prisma'
+                ? 'Exported Prisma schema'
+                : exportFormat === 'sql'
+                  ? 'Exported SQL'
+                  : `Export ${exportFormat.toUpperCase()}`}
             </DialogTitle>
             <DialogDescription>
               {exportFormat === 'prisma'
                 ? 'Prisma model blocks for each table, with relations derived from foreign-key edges (source column → referenced column).'
-                : 'CREATE TABLE statements for each table, plus ALTER TABLE foreign keys for each relationship (source column → referenced column).'}
+                : exportFormat === 'sql'
+                  ? 'CREATE TABLE statements for each table, plus ALTER TABLE foreign keys for each relationship (source column → referenced column).'
+                  : 'Downloads the full diagram (all tables and relations), independent of the current canvas zoom or pan.'}
             </DialogDescription>
           </DialogHeader>
           <Tabs
@@ -831,19 +886,40 @@ function VisualDbBuilderCanvas() {
               setCopied(false);
             }}
           >
-            <TabsList>
+            <TabsList className="flex h-auto flex-wrap gap-1">
               <TabsTrigger value="sql">SQL</TabsTrigger>
               <TabsTrigger value="prisma">Prisma</TabsTrigger>
+              <TabsTrigger value="png">PNG</TabsTrigger>
+              <TabsTrigger value="svg">SVG</TabsTrigger>
+              <TabsTrigger value="jpeg">JPEG</TabsTrigger>
             </TabsList>
           </Tabs>
-          <pre className="max-h-[50vh] overflow-auto rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed">
-            <code>{exportText}</code>
-          </pre>
+          {!isImageExportFormat(exportFormat) ? (
+            <pre className="max-h-[50vh] overflow-auto rounded-md border border-border bg-muted/40 p-4 text-xs leading-relaxed">
+              <code>{exportText}</code>
+            </pre>
+          ) : (
+            <div className="rounded-md border border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
+              Download a white-background image of the full diagram at {EXPORT_IMAGE_WIDTH}×
+              {EXPORT_IMAGE_HEIGHT}px.
+            </div>
+          )}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={copyExport}>
-              <Copy className="h-4 w-4" />
-              {copied ? 'Copied' : 'Copy to Clipboard'}
-            </Button>
+            {!isImageExportFormat(exportFormat) ? (
+              <Button type="button" variant="outline" onClick={copyExport}>
+                <Copy className="h-4 w-4" />
+                {copied ? 'Copied' : 'Copy to Clipboard'}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => void handleExportImage(exportFormat)}
+                disabled={exportingImage}
+              >
+                <ImageDown className="h-4 w-4" />
+                {exportingImage ? 'Exporting…' : 'Download'}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
