@@ -45,14 +45,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/app/visual-db-builder"
-                element={
-                  <ProtectedRoute>
-                    <VisualDbBuilder />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/app/visual-db-builder" element={<VisualDbBuilder />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

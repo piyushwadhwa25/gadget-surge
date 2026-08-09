@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -14,13 +14,18 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
-import { Copy, FolderOpen, Plus, Database, Save, Trash2 } from 'lucide-react';
+import { Cloud, Copy, FolderOpen, Plus, Database, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { TableNode, createColumn } from '@/components/db-builder/TableNode';
 import { serializeDiagram } from '@/components/db-builder/serializeDiagram';
 import type { TableFlowNode } from '@/components/db-builder/types';
 import { generateSql } from '@/lib/generateSql';
-import { supabase } from '@/lib/supabaseClient';
+import {
+  deleteDiagramLocal,
+  listDiagramsLocal,
+  saveDiagramLocal,
+  type LocalDiagram,
+} from '@/lib/localDiagramStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,24 +46,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
-const TOOL_SLUG = 'visual-db-builder';
-const FREE_DIAGRAM_LIMIT = 3;
-
 const nodeTypes = { table: TableNode };
 
 type Entitlement = {
   plan: 'free' | 'premium';
   status: string;
-};
-
-type SavedDiagramListItem = {
-  id: string;
-  name: string;
-  updated_at: string;
-  data: {
-    nodes?: TableFlowNode[];
-    edges?: Edge[];
-  } | null;
 };
 
 function createTableNode(index: number): TableFlowNode {
@@ -98,59 +90,28 @@ function VisualDbBuilderCanvas() {
   const [diagramName, setDiagramName] = useState('');
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [nameDialogMode, setNameDialogMode] = useState<'save' | 'cloud-sync'>('save');
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [myDiagramsOpen, setMyDiagramsOpen] = useState(false);
-  const [diagrams, setDiagrams] = useState<SavedDiagramListItem[]>([]);
+  const [diagrams, setDiagrams] = useState<LocalDiagram[]>([]);
   const [diagramsLoading, setDiagramsLoading] = useState(false);
-  const [entitlement, setEntitlement] = useState<Entitlement | null>(null);
+  const [cloudPrompt, setCloudPrompt] = useState<'login' | 'upgrade' | null>(null);
 
   const sql = useMemo(() => generateSql(nodes, edges), [nodes, edges]);
 
   const loadDiagrams = useCallback(async () => {
     setDiagramsLoading(true);
-    const { data, error } = await supabase
-      .from('workspace_data')
-      .select('id, name, updated_at, data')
-      .eq('tool_slug', TOOL_SLUG)
-      .order('updated_at', { ascending: false });
-
-    if (error) {
-      toast.error(error.message || 'Failed to load diagrams');
+    try {
+      const items = await listDiagramsLocal();
+      setDiagrams(items);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load diagrams');
       setDiagrams([]);
-    } else {
-      setDiagrams((data ?? []) as SavedDiagramListItem[]);
+    } finally {
+      setDiagramsLoading(false);
     }
-    setDiagramsLoading(false);
   }, []);
-
-  useEffect(() => {
-    const accessToken = session?.access_token;
-    if (!accessToken) {
-      setEntitlement(null);
-      return;
-    }
-
-    let cancelled = false;
-    fetchEntitlement(accessToken)
-      .then((data) => {
-        if (!cancelled) setEntitlement(data);
-      })
-      .catch(() => {
-        if (!cancelled) setEntitlement(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [session?.access_token]);
-
-  useEffect(() => {
-    if (!session?.access_token) {
-      setDiagrams([]);
-      return;
-    }
-    void loadDiagrams();
-  }, [session?.access_token, loadDiagrams]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -169,14 +130,35 @@ function VisualDbBuilderCanvas() {
     window.setTimeout(() => setCopied(false), 1500);
   };
 
-  const persistDiagram = async (name: string, existingId: string | null) => {
+  const persistDiagramLocal = async (name: string, existingId: string | null) => {
+    setSaving(true);
+    try {
+      const saved = await saveDiagramLocal({
+        id: existingId ?? undefined,
+        name,
+        data: serializeDiagram(nodes, edges),
+      });
+      setDiagramId(saved.id);
+      setDiagramName(saved.name);
+      toast.success('Diagram saved');
+      void loadDiagrams();
+      return saved;
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save diagram');
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const pushDiagramToCloud = async (id: string, name: string) => {
     const accessToken = session?.access_token;
     if (!accessToken) {
-      toast.error('You must be signed in to save.');
+      setCloudPrompt('login');
       return;
     }
 
-    setSaving(true);
+    setSyncing(true);
     try {
       const response = await fetch('/api/save-diagram', {
         method: 'POST',
@@ -185,7 +167,7 @@ function VisualDbBuilderCanvas() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          diagramId: existingId ?? undefined,
+          diagramId: id,
           name,
           data: serializeDiagram(nodes, edges),
         }),
@@ -196,7 +178,7 @@ function VisualDbBuilderCanvas() {
       if (response.status === 403) {
         const message =
           (body && typeof body.error === 'string' && body.error) ||
-          'Free plan limit reached. Upgrade to save more.';
+          'Cloud sync requires a premium plan.';
         toast.error(message, {
           action: {
             label: 'Upgrade',
@@ -209,44 +191,78 @@ function VisualDbBuilderCanvas() {
       if (!response.ok) {
         const message =
           (body && typeof body.error === 'string' && body.error) ||
-          `Failed to save diagram (${response.status})`;
+          `Failed to sync diagram (${response.status})`;
         throw new Error(message);
       }
 
-      const saved = body as { id: string; updated_at: string };
-      setDiagramId(saved.id);
-      setDiagramName(name);
-      toast.success('Diagram saved');
-      void loadDiagrams();
+      toast.success('Diagram synced to cloud');
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save diagram');
+      toast.error(err instanceof Error ? err.message : 'Failed to sync diagram');
     } finally {
-      setSaving(false);
+      setSyncing(false);
     }
   };
 
   const handleSaveClick = () => {
     if (!diagramId) {
+      setNameDialogMode('save');
       setNameDraft(diagramName || 'Untitled diagram');
       setNameDialogOpen(true);
       return;
     }
-    void persistDiagram(diagramName || 'Untitled diagram', diagramId);
+    void persistDiagramLocal(diagramName || 'Untitled diagram', diagramId);
   };
 
-  const handleConfirmNameSave = () => {
+  const handleConfirmNameSave = async () => {
     const name = nameDraft.trim();
     if (!name) {
       toast.error('Enter a diagram name');
       return;
     }
     setNameDialogOpen(false);
-    void persistDiagram(name, null);
+    const mode = nameDialogMode;
+    const saved = await persistDiagramLocal(name, null);
+    if (mode === 'cloud-sync' && saved) {
+      await pushDiagramToCloud(saved.id, saved.name);
+    }
   };
 
-  const handleLoadDiagram = (item: SavedDiagramListItem) => {
-    const loadedNodes = Array.isArray(item.data?.nodes) ? item.data.nodes : [];
-    const loadedEdges = Array.isArray(item.data?.edges) ? item.data.edges : [];
+  const handleCloudSyncClick = async () => {
+    if (!session?.access_token) {
+      setCloudPrompt('login');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const entitlement = await fetchEntitlement(session.access_token);
+      if (entitlement.plan !== 'premium') {
+        setCloudPrompt('upgrade');
+        return;
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to check plan');
+      return;
+    } finally {
+      setSyncing(false);
+    }
+
+    if (!diagramId) {
+      setNameDialogMode('cloud-sync');
+      setNameDraft(diagramName || 'Untitled diagram');
+      setNameDialogOpen(true);
+      return;
+    }
+
+    const saved = await persistDiagramLocal(diagramName || 'Untitled diagram', diagramId);
+    if (saved) {
+      await pushDiagramToCloud(saved.id, saved.name);
+    }
+  };
+
+  const handleLoadDiagram = (item: LocalDiagram) => {
+    const loadedNodes = Array.isArray(item.data?.nodes) ? (item.data.nodes as TableFlowNode[]) : [];
+    const loadedEdges = Array.isArray(item.data?.edges) ? (item.data.edges as Edge[]) : [];
     setNodes(loadedNodes);
     setEdges(loadedEdges);
     setDiagramId(item.id);
@@ -255,25 +271,19 @@ function VisualDbBuilderCanvas() {
     toast.success(`Loaded “${item.name}”`);
   };
 
-  const handleDeleteDiagram = async (item: SavedDiagramListItem) => {
-    const { error } = await supabase.from('workspace_data').delete().eq('id', item.id);
-    if (error) {
-      toast.error(error.message || 'Failed to delete diagram');
-      return;
+  const handleDeleteDiagram = async (item: LocalDiagram) => {
+    try {
+      await deleteDiagramLocal(item.id);
+      if (diagramId === item.id) {
+        setDiagramId(null);
+        setDiagramName('');
+      }
+      toast.success('Diagram deleted');
+      void loadDiagrams();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete diagram');
     }
-    if (diagramId === item.id) {
-      setDiagramId(null);
-      setDiagramName('');
-    }
-    toast.success('Diagram deleted');
-    void loadDiagrams();
   };
-
-  const planLabel = (() => {
-    if (!entitlement) return null;
-    if (entitlement.plan === 'premium') return 'Premium — unlimited';
-    return `Free plan — ${diagrams.length}/${FREE_DIAGRAM_LIMIT} diagrams used`;
-  })();
 
   return (
     <div className="flex h-[calc(100vh-8rem)] min-h-[480px] flex-col">
@@ -291,7 +301,6 @@ function VisualDbBuilderCanvas() {
               {diagramName
                 ? `Editing: ${diagramName}`
                 : 'Design tables and foreign keys, then export SQL.'}
-              {planLabel ? ` · ${planLabel}` : null}
             </p>
           </div>
         </div>
@@ -317,6 +326,16 @@ function VisualDbBuilderCanvas() {
           </Button>
           <Button type="button" onClick={() => setSqlOpen(true)}>
             Export SQL
+          </Button>
+          <div className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void handleCloudSyncClick()}
+            disabled={syncing || saving}
+          >
+            <Cloud className="h-4 w-4" />
+            {syncing ? 'Syncing…' : 'Cloud Sync'}
           </Button>
         </div>
       </div>
@@ -362,8 +381,14 @@ function VisualDbBuilderCanvas() {
       <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Save diagram</DialogTitle>
-            <DialogDescription>Choose a name for this diagram.</DialogDescription>
+            <DialogTitle>
+              {nameDialogMode === 'cloud-sync' ? 'Name before syncing' : 'Save diagram'}
+            </DialogTitle>
+            <DialogDescription>
+              {nameDialogMode === 'cloud-sync'
+                ? 'Save this diagram locally, then sync it to the cloud.'
+                : 'Choose a name for this diagram. Saved in this browser.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
             <Label htmlFor="diagram-name">Name</Label>
@@ -374,7 +399,7 @@ function VisualDbBuilderCanvas() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  handleConfirmNameSave();
+                  void handleConfirmNameSave();
                 }
               }}
               placeholder="Untitled diagram"
@@ -385,9 +410,47 @@ function VisualDbBuilderCanvas() {
             <Button type="button" variant="outline" onClick={() => setNameDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleConfirmNameSave} disabled={saving}>
-              {saving ? 'Saving…' : 'Save'}
+            <Button type="button" onClick={() => void handleConfirmNameSave()} disabled={saving || syncing}>
+              {saving || syncing
+                ? nameDialogMode === 'cloud-sync'
+                  ? 'Syncing…'
+                  : 'Saving…'
+                : nameDialogMode === 'cloud-sync'
+                  ? 'Save & Sync'
+                  : 'Save'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={cloudPrompt !== null}
+        onOpenChange={(open) => {
+          if (!open) setCloudPrompt(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cloud Sync</DialogTitle>
+            <DialogDescription>
+              {cloudPrompt === 'login'
+                ? 'Log in to sync your diagrams across devices.'
+                : 'Cloud sync is a premium feature. Upgrade to sync diagrams across devices.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCloudPrompt(null)}>
+              Cancel
+            </Button>
+            {cloudPrompt === 'login' ? (
+              <Button type="button" asChild>
+                <Link to="/login">Log in</Link>
+              </Button>
+            ) : (
+              <Button type="button" asChild>
+                <Link to="/dashboard">Upgrade</Link>
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -397,16 +460,7 @@ function VisualDbBuilderCanvas() {
           <SheetHeader>
             <SheetTitle>My Diagrams</SheetTitle>
             <SheetDescription>
-              Load a saved diagram or delete one to free a slot.
-              {entitlement?.plan === 'free' ? (
-                <>
-                  {' '}
-                  Free plan: {diagrams.length}/{FREE_DIAGRAM_LIMIT}.{' '}
-                  <Link to="/dashboard" className="underline underline-offset-2">
-                    Upgrade
-                  </Link>
-                </>
-              ) : null}
+              Diagrams saved in this browser. Load one to continue editing, or delete it.
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-2">
@@ -429,7 +483,7 @@ function VisualDbBuilderCanvas() {
                   >
                     <div className="truncate text-sm font-medium text-foreground">{item.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      Updated {new Date(item.updated_at).toLocaleString()}
+                      Updated {new Date(item.updatedAt).toLocaleString()}
                     </div>
                   </button>
                   <Button

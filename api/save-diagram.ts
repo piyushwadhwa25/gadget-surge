@@ -5,7 +5,6 @@ import { verifyUser } from './_lib/verifyUser.js';
 type Plan = 'free' | 'premium';
 
 const TOOL_SLUG = 'visual-db-builder';
-const FREE_DIAGRAM_LIMIT = 3;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -51,26 +50,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? 'premium'
       : 'free';
 
+  if (plan !== 'premium') {
+    return res.status(403).json({ error: 'Cloud sync requires a premium plan.' });
+  }
+
   if (!diagramId) {
-    if (plan === 'free') {
-      const { count, error: countError } = await supabaseAdmin
-        .from('workspace_data')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('tool_slug', TOOL_SLUG);
-
-      if (countError) {
-        console.error('save-diagram: count query failed', countError);
-        return res.status(500).json({ error: 'Failed to check diagram quota' });
-      }
-
-      if ((count ?? 0) >= FREE_DIAGRAM_LIMIT) {
-        return res.status(403).json({
-          error: 'Free plan limit reached (3 diagrams). Upgrade to save more.',
-        });
-      }
-    }
-
     const { data: inserted, error: insertError } = await supabaseAdmin
       .from('workspace_data')
       .insert({
@@ -101,26 +85,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Failed to load diagram' });
   }
 
-  if (!existing) {
-    return res.status(404).json({ error: 'Diagram not found' });
+  if (existing) {
+    if (existing.user_id !== user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('workspace_data')
+      .update({ name, data })
+      .eq('id', diagramId)
+      .eq('user_id', user.id)
+      .select('id, updated_at')
+      .single();
+
+    if (updateError || !updated) {
+      console.error('save-diagram: update failed', updateError);
+      return res.status(500).json({ error: 'Failed to save diagram' });
+    }
+
+    return res.status(200).json({ id: updated.id, updated_at: updated.updated_at });
   }
 
-  if (existing.user_id !== user.id) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-
-  const { data: updated, error: updateError } = await supabaseAdmin
+  // First cloud sync for this local diagram id — insert with the client-provided id.
+  const { data: inserted, error: insertError } = await supabaseAdmin
     .from('workspace_data')
-    .update({ name, data })
-    .eq('id', diagramId)
-    .eq('user_id', user.id)
+    .insert({
+      id: diagramId,
+      user_id: user.id,
+      tool_slug: TOOL_SLUG,
+      name,
+      data,
+    })
     .select('id, updated_at')
     .single();
 
-  if (updateError || !updated) {
-    console.error('save-diagram: update failed', updateError);
+  if (insertError || !inserted) {
+    console.error('save-diagram: insert with local id failed', insertError);
     return res.status(500).json({ error: 'Failed to save diagram' });
   }
 
-  return res.status(200).json({ id: updated.id, updated_at: updated.updated_at });
+  return res.status(200).json({ id: inserted.id, updated_at: inserted.updated_at });
 }
