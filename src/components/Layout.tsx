@@ -16,7 +16,7 @@ const navItems: { label: string; path: string; badge?: string }[] = [
   { label: 'Text Tools', path: '/category/text-tools' },
   { label: 'Image Tools', path: '/category/image-tools' },
   { label: 'All Tools', path: '/tools' },
-  { label: 'Visual DB Builder', path: '/app/visual-db-builder', badge: 'Pro' },
+  { label: 'Visual DB Builder', path: '/app/visual-db-builder', badge: 'Free' },
 ];
 
 export function Layout() {
