@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import AllTools from "./pages/AllTools";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Pricing from "./pages/Pricing";
 import CategoryPage from "./pages/CategoryPage";
 import ToolPage from "./pages/ToolPage";
 import Login from "./pages/Login";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/tools" element={<AllTools />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/tools/:slug" element={<ToolPage />} />
               <Route path="/category/:slug" element={<CategoryPage />} />
               <Route path="/login" element={<Login />} />

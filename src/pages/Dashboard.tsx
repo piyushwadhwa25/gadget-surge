@@ -5,82 +5,8 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-
-type Entitlement = {
-  plan: 'free' | 'premium';
-  status: string;
-};
-
-type CreateOrderResponse = {
-  orderId: string;
-  amount: number;
-  currency: string;
-  keyId: string;
-};
-
-type RazorpayCheckoutOptions = {
-  key: string;
-  amount: number;
-  currency: string;
-  order_id: string;
-  name?: string;
-  description?: string;
-  handler: (response: { razorpay_payment_id: string; razorpay_order_id: string }) => void;
-  modal?: {
-    ondismiss?: () => void;
-  };
-};
-
-type RazorpayInstance = {
-  open: () => void;
-};
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: RazorpayCheckoutOptions) => RazorpayInstance;
-  }
-}
-
-function loadRazorpayCheckoutScript(): Promise<void> {
-  if (typeof window !== 'undefined' && window.Razorpay) {
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[data-razorpay-checkout="true"]',
-    );
-    if (existing) {
-      existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error('Failed to load Razorpay Checkout')), {
-        once: true,
-      });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.dataset.razorpayCheckout = 'true';
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load Razorpay Checkout'));
-    document.body.appendChild(script);
-  });
-}
-
-async function fetchEntitlement(accessToken: string): Promise<Entitlement> {
-  const response = await fetch('/api/entitlement', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    const message =
-      (body && typeof body.error === 'string' && body.error) ||
-      `Failed to load entitlement (${response.status})`;
-    throw new Error(message);
-  }
-  return response.json() as Promise<Entitlement>;
-}
+import { fetchEntitlement, type Entitlement } from '@/lib/entitlement';
+import { startUpgradeCheckout } from '@/lib/upgradeCheckout';
 
 export default function Dashboard() {
   const { user, session, signOut } = useAuth();
@@ -154,34 +80,8 @@ export default function Dashboard() {
     setUpgrading(true);
 
     try {
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        const message =
-          (body && typeof body.error === 'string' && body.error) ||
-          `Failed to create order (${response.status})`;
-        throw new Error(message);
-      }
-
-      const order = (await response.json()) as CreateOrderResponse;
-      await loadRazorpayCheckoutScript();
-
-      if (!window.Razorpay) {
-        throw new Error('Razorpay Checkout failed to initialize');
-      }
-
-      const rzp = new window.Razorpay({
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        order_id: order.orderId,
-        name: 'GadgetSurge',
-        description: 'Premium plan',
-        handler: () => {
+      await startUpgradeCheckout(accessToken, {
+        onPaymentSuccess: () => {
           // Checkout success ≠ entitlement granted. Webhook is source of truth.
           setPaymentPendingMessage('Payment successful, activating your account...');
           setUpgrading(false);
@@ -202,14 +102,10 @@ export default function Dashboard() {
               });
           }, 2500);
         },
-        modal: {
-          ondismiss: () => {
-            setUpgrading(false);
-          },
+        onDismiss: () => {
+          setUpgrading(false);
         },
       });
-
-      rzp.open();
     } catch (err: unknown) {
       setUpgrading(false);
       setError(err instanceof Error ? err.message : 'Failed to start checkout');

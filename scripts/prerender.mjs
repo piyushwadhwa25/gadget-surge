@@ -33,6 +33,11 @@ const routeMeta = {
     description: 'Contact GadgetSurge for bug reports, tool suggestions, or general feedback. Reach out by email — usually a reply within a few days.',
     canonical: `${BASE_URL}/contact`,
   },
+  '/pricing': {
+    title: 'Pricing — Free & Pro Plans | GadgetSurge',
+    description: 'Compare GadgetSurge Free and Pro plans. Unlimited local Visual DB Builder diagrams for free; Pro adds cloud sync and watermark-free exports.',
+    canonical: `${BASE_URL}/pricing`,
+  },
   '/category/developer-tools': {
     title: 'Free Developer Tools Online — JSON, Base64, UUID, Regex & More | GadgetSurge',
     description: 'Free online developer tools including JSON formatter, Base64 encoder/decoder, UUID generator, regex tester, JWT decoder, timestamp converter, and more.',

@@ -478,7 +478,7 @@ function VisualDbBuilderCanvas() {
         toast.error(message, {
           action: {
             label: 'Upgrade',
-            onClick: () => navigate('/dashboard'),
+            onClick: () => navigate('/pricing'),
           },
         });
         return;
@@ -1032,7 +1032,7 @@ function VisualDbBuilderCanvas() {
               </Button>
             ) : (
               <Button type="button" asChild>
-                <Link to="/dashboard">Upgrade</Link>
+                <Link to="/pricing">Upgrade</Link>
               </Button>
             )}
           </DialogFooter>
@@ -1119,7 +1119,7 @@ function VisualDbBuilderCanvas() {
                     Cloud sync is a premium feature. Upgrade to sync diagrams across devices.
                   </p>
                   <Button type="button" asChild>
-                    <Link to="/dashboard">Upgrade</Link>
+                    <Link to="/pricing">Upgrade</Link>
                   </Button>
                 </div>
               )}

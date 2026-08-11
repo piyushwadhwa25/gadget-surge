@@ -1,14 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Razorpay from 'razorpay';
 import { verifyUser } from './_lib/verifyUser.js';
-
-/**
- * PLACEHOLDER: Premium plan price in paise (₹499.00).
- * Update this constant before launch — do not hardcode amounts inline.
- */
-const PREMIUM_AMOUNT_PAISE = 49900;
-
-const PREMIUM_CURRENCY = 'INR';
+import { PREMIUM_AMOUNT_PAISE, PREMIUM_CURRENCY } from '../src/lib/premiumPlan.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

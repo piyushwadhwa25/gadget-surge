@@ -73,10 +73,10 @@ export default function Index() {
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            to="/dashboard"
+            to="/pricing"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-card-foreground hover:border-primary/50 transition-all"
           >
-            View plans &amp; dashboard
+            View pricing
           </Link>
         </div>
       </section>

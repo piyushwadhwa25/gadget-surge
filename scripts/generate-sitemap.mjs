@@ -11,6 +11,7 @@ const routes = [
   { path: '/tools', priority: '0.9', changefreq: 'weekly' },
   { path: '/about', priority: '0.6', changefreq: 'monthly' },
   { path: '/contact', priority: '0.6', changefreq: 'monthly' },
+  { path: '/pricing', priority: '0.6', changefreq: 'monthly' },
   { path: '/category/developer-tools', priority: '0.8', changefreq: 'weekly' },
   { path: '/category/image-tools', priority: '0.8', changefreq: 'weekly' },
   { path: '/category/text-tools', priority: '0.8', changefreq: 'weekly' },
