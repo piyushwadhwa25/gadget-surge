@@ -5,9 +5,11 @@ import { ToolCard } from '@/components/ToolCard';
 import {
   getFeaturedTools, getPopularTools, getRecentlyAddedTools,
   getToolsByCategory, getToolsByUseCaseTag, tools, categories,
-  useCaseLabels, getAllUseCaseTags, type UseCaseTag,
+  useCaseLabels, getAllUseCaseTags,
 } from '@/lib/tools-registry';
-import { Zap, ArrowRight, Code2, Type, ImageIcon, Shield, Globe, Sparkles } from 'lucide-react';
+import {
+  ArrowRight, Sparkles, Database, FileUp, FileCode2, Cloud,
+} from 'lucide-react';
 
 export default function Index() {
   const featured = getFeaturedTools();
@@ -45,56 +47,101 @@ export default function Index() {
         <script type="application/ld+json">{JSON.stringify(websiteLd)}</script>
       </Helmet>
 
-      {/* Hero */}
+      {/* Hero — Visual DB Builder */}
       <section className="container mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16 text-center">
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className="p-3 rounded-2xl bg-primary/10">
-            <Zap className="h-8 w-8 text-primary" />
+            <Database className="h-8 w-8 text-primary" />
           </div>
         </div>
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight mb-5 leading-tight">
-          Free Online Tools for <br className="hidden sm:block" />
-          <span className="text-primary">Developers</span>, <span className="text-primary">Creators</span> & Everyone
+          Design databases visually, <br className="hidden sm:block" />
+          powered by <span className="text-primary">AI</span>
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4 leading-relaxed">
-          {tools.length} lightweight browser-based utilities. No signup, no data collection — everything runs in your browser.
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          Free unlimited local diagrams — no signup required.
         </p>
-        <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-8">
-          Format JSON, resize images, generate passwords, count words, convert data formats, and much more — all free and private.
+        <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-8 mt-2">
+          Cloud sync, AI schema generation, and Pro features when you need them.
         </p>
-        <SearchBar large className="max-w-xl mx-auto" />
-        <p className="mt-3 text-xs text-muted-foreground">{tools.length} free tools • 100% client-side • No signup required</p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            to="/app/visual-db-builder"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Open Visual DB Builder
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 text-sm font-semibold text-card-foreground hover:border-primary/50 transition-all"
+          >
+            View plans &amp; dashboard
+          </Link>
+        </div>
       </section>
 
-      {/* Value props */}
+      {/* Feature highlights — Visual DB Builder */}
       <section className="container mx-auto px-4 pb-14">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
           {[
-            { icon: Code2, title: 'Developer Tools', desc: `${devTools.length} formatting, encoding, and debugging tools.`, path: '/category/developer-tools' },
-            { icon: Type, title: 'Text Tools', desc: `${textTools.length} counting, conversion, and generator tools.`, path: '/category/text-tools' },
-            { icon: ImageIcon, title: 'Image Tools', desc: `${imageTools.length} resize, convert, and compression tools.`, path: '/category/image-tools' },
-            { icon: Shield, title: '100% Private', desc: 'All tools run in your browser. No data leaves your device.' },
-          ].map(({ icon: Icon, title, desc, path }) => (
+            { icon: Sparkles, title: 'AI Schema Generation', desc: 'Describe your data model in plain language and get a ready-to-edit schema.' },
+            { icon: FileUp, title: 'Import SQL', desc: 'Paste existing CREATE TABLE statements and turn them into a visual diagram.' },
+            { icon: FileCode2, title: 'Export SQL & Prisma', desc: 'Export your diagram to SQL DDL or Prisma schema when you are ready to ship.' },
+            { icon: Cloud, title: 'Cloud Sync', desc: 'Save and sync diagrams across devices.', pro: true },
+          ].map(({ icon: Icon, title, desc, pro }) => (
             <div key={title} className="text-center p-5 rounded-xl border border-border bg-card hover:border-primary/30 transition-all">
-              {path ? (
-                <Link to={path} className="block">
-                  <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-card-foreground mb-1 text-sm">{title}</h3>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
-                </Link>
-              ) : (
-                <>
-                  <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-card-foreground mb-1 text-sm">{title}</h3>
-                  <p className="text-xs text-muted-foreground">{desc}</p>
-                </>
-              )}
+              <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-3">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="font-semibold text-card-foreground mb-1 text-sm">
+                {title}
+                {pro && (
+                  <span className="ml-1.5 align-middle text-[10px] font-semibold uppercase tracking-wider text-accent">Pro</span>
+                )}
+              </h3>
+              <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Free tools intro */}
+      <section className="container mx-auto px-4 pb-14">
+        <div className="text-center mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
+            Plus, {tools.length} free developer tools
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-6">
+            Format JSON, resize images, generate passwords, and more — all free, private, and client-side.
+          </p>
+          <SearchBar large className="max-w-xl mx-auto" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {categories.map(cat => {
+            const count = getToolsByCategory(cat.slug).length;
+            return (
+              <Link
+                key={cat.slug}
+                to={`/category/${cat.slug}`}
+                className="text-center p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 transition-all"
+              >
+                <span className="text-sm font-medium text-card-foreground">{cat.name}</span>
+                {cat.comingSoon ? (
+                  <span className="block text-[10px] text-accent font-semibold mt-1">Coming Soon</span>
+                ) : (
+                  <span className="block text-xs text-muted-foreground mt-1">{count} tools</span>
+                )}
+              </Link>
+            );
+          })}
+          <Link
+            to="/tools"
+            className="text-center p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:shadow-md hover:shadow-primary/5 transition-all"
+          >
+            <span className="text-sm font-medium text-card-foreground">All Tools</span>
+            <span className="block text-xs text-muted-foreground mt-1">{tools.length} tools</span>
+          </Link>
         </div>
       </section>
 
