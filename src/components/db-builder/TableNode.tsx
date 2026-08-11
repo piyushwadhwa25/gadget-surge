@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useDiagramEditMode } from './DiagramEditModeContext';
 import {
   SQL_TYPES,
   columnSourceHandleId,
@@ -44,6 +45,7 @@ function createColumn(partial?: Partial<ColumnDef>): ColumnDef {
 export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
   const { updateNodeData, setEdges, setNodes, getNode, deleteElements } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
+  const { readOnly } = useDiagramEditMode();
   const isCollapsed = !!data.isCollapsed;
 
   useEffect(() => {
@@ -51,16 +53,19 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
   }, [id, data.columns.length, isCollapsed, updateNodeInternals]);
 
   const patchColumns = (columns: ColumnDef[]) => {
+    if (readOnly) return;
     updateNodeData(id, { columns });
   };
 
   const updateColumn = (columnId: string, patch: Partial<ColumnDef>) => {
+    if (readOnly) return;
     patchColumns(
       data.columns.map((col) => (col.id === columnId ? { ...col, ...patch } : col)),
     );
   };
 
   const removeColumn = (columnId: string) => {
+    if (readOnly) return;
     const targetHandle = columnTargetHandleId(columnId);
     const sourceHandle = columnSourceHandleId(columnId);
     patchColumns(data.columns.filter((col) => col.id !== columnId));
@@ -76,14 +81,17 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
   };
 
   const addColumn = () => {
+    if (readOnly) return;
     patchColumns([...data.columns, createColumn()]);
   };
 
   const toggleCollapsed = () => {
+    // Collapse is view-only chrome; allow in read-only mode.
     updateNodeData(id, { isCollapsed: !isCollapsed });
   };
 
   const duplicateTable = () => {
+    if (readOnly) return;
     const original = getNode(id) as TableFlowNode | undefined;
     if (!original) return;
 
@@ -113,6 +121,7 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
   };
 
   const deleteTable = () => {
+    if (readOnly) return;
     void deleteElements({ nodes: [{ id }] });
   };
 
@@ -121,14 +130,16 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
   return (
     <div className="w-[340px] rounded-md border border-border bg-card text-card-foreground shadow-sm">
       <div className="flex items-center gap-1.5 border-b border-border bg-muted/40 px-2 py-2">
-        <div
-          className="drag-handle__table-node flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
-          style={{ touchAction: 'none' }}
-          aria-label="Drag table"
-          title="Drag table"
-        >
-          <GripVertical className="h-4 w-4" />
-        </div>
+        {!readOnly && (
+          <div
+            className="drag-handle__table-node flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+            style={{ touchAction: 'none' }}
+            aria-label="Drag table"
+            title="Drag table"
+          >
+            <GripVertical className="h-4 w-4" />
+          </div>
+        )}
         <Button
           type="button"
           variant="ghost"
@@ -146,31 +157,39 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
         </Button>
         <Input
           value={data.tableName}
-          onChange={(e) => updateNodeData(id, { tableName: e.target.value })}
+          onChange={(e) => {
+            if (readOnly) return;
+            updateNodeData(id, { tableName: e.target.value });
+          }}
+          readOnly={readOnly}
           className="nodrag nopan h-8 flex-1 font-semibold"
           placeholder="table_name"
           aria-label="Table name"
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground"
-          onClick={duplicateTable}
-          aria-label="Duplicate table"
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-          onClick={deleteTable}
-          aria-label="Delete table"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        {!readOnly && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground"
+              onClick={duplicateTable}
+              aria-label="Duplicate table"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={deleteTable}
+              aria-label="Delete table"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </>
+        )}
       </div>
 
       {isCollapsed ? (
@@ -198,6 +217,7 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
                   <Input
                     value={column.name}
                     onChange={(e) => updateColumn(column.id, { name: e.target.value })}
+                    readOnly={readOnly}
                     className="nodrag nopan h-8 min-w-0 flex-1 text-xs"
                     placeholder="column"
                     aria-label="Column name"
@@ -206,6 +226,7 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
                   <Select
                     value={column.type}
                     onValueChange={(value: SqlType) => updateColumn(column.id, { type: value })}
+                    disabled={readOnly}
                   >
                     <SelectTrigger className="nodrag nopan h-8 w-[118px] text-xs">
                       <SelectValue />
@@ -223,6 +244,7 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
                     <Checkbox
                       id={`${column.id}-pk`}
                       checked={column.isPrimaryKey}
+                      disabled={readOnly}
                       onCheckedChange={(checked) =>
                         updateColumn(column.id, { isPrimaryKey: checked === true })
                       }
@@ -236,16 +258,18 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
                     </Label>
                   </div>
 
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeColumn(column.id)}
-                    aria-label="Delete column"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {!readOnly && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="nodrag nopan h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeColumn(column.id)}
+                      aria-label="Delete column"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
 
                   <Handle
                     type="source"
@@ -259,18 +283,20 @@ export function TableNode({ id, data }: NodeProps<TableFlowNode>) {
             })}
           </div>
 
-          <div className="border-t border-border px-2 py-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="nodrag nopan w-full"
-              onClick={addColumn}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Column
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="border-t border-border px-2 py-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="nodrag nopan w-full"
+                onClick={addColumn}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Column
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>

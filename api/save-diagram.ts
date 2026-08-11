@@ -86,15 +86,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (existing) {
-    if (existing.user_id !== user.id) {
+    const isOwner = existing.user_id === user.id;
+    let isEditorCollaborator = false;
+
+    if (!isOwner) {
+      const { data: collab, error: collabError } = await supabaseAdmin
+        .from('diagram_collaborators')
+        .select('id')
+        .eq('diagram_id', diagramId)
+        .eq('user_id', user.id)
+        .eq('role', 'editor')
+        .maybeSingle();
+
+      if (collabError) {
+        console.error('save-diagram: collaborator lookup failed', collabError);
+        return res.status(500).json({ error: 'Failed to verify collaborator access' });
+      }
+
+      isEditorCollaborator = Boolean(collab);
+    }
+
+    if (!isOwner && !isEditorCollaborator) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const { data: updated, error: updateError } = await supabaseAdmin
+    // Owner path keeps user_id filter; editor collaborators only match by diagram id.
+    let updateQuery = supabaseAdmin
       .from('workspace_data')
       .update({ name, data })
-      .eq('id', diagramId)
-      .eq('user_id', user.id)
+      .eq('id', diagramId);
+
+    if (isOwner) {
+      updateQuery = updateQuery.eq('user_id', user.id);
+    }
+
+    const { data: updated, error: updateError } = await updateQuery
       .select('id, updated_at')
       .single();
 

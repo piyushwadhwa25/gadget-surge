@@ -6,6 +6,7 @@ import {
   useReactFlow,
   type EdgeProps,
 } from '@xyflow/react';
+import { useDiagramEditMode } from './DiagramEditModeContext';
 
 /**
  * Default bezier edge with a midpoint × control shown when the edge is selected.
@@ -26,6 +27,7 @@ export function DeletableEdge({
   interactionWidth,
 }: EdgeProps) {
   const { setEdges } = useReactFlow();
+  const { readOnly } = useDiagramEditMode();
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -37,6 +39,7 @@ export function DeletableEdge({
 
   const removeEdge = (event: MouseEvent) => {
     event.stopPropagation();
+    if (readOnly) return;
     setEdges((edges) => edges.filter((edge) => edge.id !== id));
   };
 
@@ -50,7 +53,7 @@ export function DeletableEdge({
         markerStart={markerStart}
         interactionWidth={interactionWidth}
       />
-      {selected && (
+      {selected && !readOnly && (
         <EdgeLabelRenderer>
           <button
             type="button"
