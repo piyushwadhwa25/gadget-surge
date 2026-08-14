@@ -12,6 +12,66 @@ if (process.env.SKIP_PRERENDER === '1') {
 
 const BASE_URL = 'https://www.gadgetsurge.com';
 
+function extractExportedArray(source, exportName) {
+  const marker = `export const ${exportName}`;
+  const start = source.indexOf(marker);
+  if (start < 0) throw new Error(`${exportName} not found in tools-registry.ts`);
+  const eq = source.indexOf('=', start);
+  const open = source.indexOf('[', eq);
+  let depth = 0;
+  let inSingle = false;
+  let inDouble = false;
+  let escape = false;
+  let i = open;
+  for (; i < source.length; i++) {
+    const c = source[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (inSingle) {
+      if (c === '\\') escape = true;
+      else if (c === "'") inSingle = false;
+      continue;
+    }
+    if (inDouble) {
+      if (c === '\\') escape = true;
+      else if (c === '"') inDouble = false;
+      continue;
+    }
+    if (c === "'") {
+      inSingle = true;
+      continue;
+    }
+    if (c === '"') {
+      inDouble = true;
+      continue;
+    }
+    if (c === '[') depth++;
+    else if (c === ']') {
+      depth--;
+      if (depth === 0) {
+        i++;
+        break;
+      }
+    }
+  }
+  const literal = source.slice(open, i);
+  return Function(`"use strict"; return (${literal});`)();
+}
+
+const registrySource = readFileSync(resolve(__dirname, '../src/lib/tools-registry.ts'), 'utf8');
+const categories = extractExportedArray(registrySource, 'categories');
+const registryTools = extractExportedArray(registrySource, 'tools');
+
+function getCategoryBySlug(slug) {
+  return categories.find(c => c.slug === slug);
+}
+
+function getToolsByCategory(categorySlug) {
+  return registryTools.filter(t => t.categorySlug === categorySlug);
+}
+
 const routeMeta = {
   '/': {
     title: 'GadgetSurge — Free Online Tools for Developers, Creators & Everyday Tasks',
@@ -134,9 +194,116 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function buildCategorySchemaBlocks(slug) {
+  const category = getCategoryBySlug(slug);
+  if (!category) return '';
+
+  const schemaBase = 'https://www.gadgetsurge.com';
+  const canonicalUrl = `${schemaBase}/category/${slug}`;
+  const categoryTools = getToolsByCategory(slug);
+  const blocks = [];
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.gadgetsurge.com/' },
+      { '@type': 'ListItem', position: 2, name: category.name, item: canonicalUrl },
+    ],
+  };
+  blocks.push(`<script type="application/ld+json">${JSON.stringify(breadcrumbLd)}</script>`);
+
+  if (category.faqItems && category.faqItems.length > 0) {
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: category.faqItems.map(faq => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+      })),
+    };
+    blocks.push(`<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`);
+  }
+
+  const collectionPage = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: category.name,
+    description: category.description,
+    url: canonicalUrl,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: categoryTools.map((tool, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: `${schemaBase}/tools/${tool.slug}`,
+      })),
+    },
+  };
+  blocks.push(`<script type="application/ld+json">${JSON.stringify(collectionPage)}</script>`);
+
+  return blocks.join('\n');
+}
+
+function buildCategoryStaticContentBlock(slug) {
+  const category = getCategoryBySlug(slug);
+  if (!category) return '';
+
+  const categoryTools = getToolsByCategory(slug);
+  const parts = [];
+
+  parts.push(
+    '<div id="seo-content" class="mt-12 space-y-8 text-sm text-muted-foreground max-w-prose mx-auto px-4">',
+  );
+
+  parts.push(`<h1>${escapeHtml(category.name)}</h1>`);
+  parts.push(`<p>${escapeHtml(category.introText)}</p>`);
+
+  if (category.whoIsItFor) {
+    parts.push(`<p>${escapeHtml(category.whoIsItFor)}</p>`);
+  }
+
+  if (category.commonUseCases && category.commonUseCases.length > 0) {
+    parts.push('<section><h2>Common use cases</h2><ul>');
+    category.commonUseCases.forEach(uc => {
+      parts.push(`<li>${escapeHtml(uc)}</li>`);
+    });
+    parts.push('</ul></section>');
+  }
+
+  if (categoryTools.length > 0) {
+    parts.push(`<section><h2>All ${escapeHtml(category.name)}</h2><ul>`);
+    categoryTools.forEach(tool => {
+      parts.push(
+        `<li><a href="/tools/${escapeHtml(tool.slug)}">${escapeHtml(tool.name)}</a> — ${escapeHtml(tool.description)}</li>`,
+      );
+    });
+    parts.push('</ul></section>');
+  }
+
+  if (category.faqItems && category.faqItems.length > 0) {
+    parts.push('<section><h2>Frequently Asked Questions</h2>');
+    category.faqItems.forEach(faq => {
+      parts.push(`<h3>${escapeHtml(faq.question)}</h3>`);
+      parts.push(`<p>${escapeHtml(faq.answer)}</p>`);
+    });
+    parts.push('</section>');
+  }
+
+  parts.push('</div>');
+
+  return parts.join('\n');
+}
+
 function buildSchemaBlocks(route, map) {
   const schemaBase = 'https://www.gadgetsurge.com';
   const blocks = [];
+
+  const categoryMatch = route.match(/^\/category\/([^/]+)$/);
+  if (categoryMatch) {
+    return buildCategorySchemaBlocks(categoryMatch[1]);
+  }
 
   const toolMatch = route.match(/^\/tools\/([^/]+)$/);
   if (!toolMatch) return '';
@@ -207,6 +374,11 @@ function buildSchemaBlocks(route, map) {
 }
 
 function buildStaticContentBlock(route, map, metaByRoute) {
+  const categoryMatch = route.match(/^\/category\/([^/]+)$/);
+  if (categoryMatch) {
+    return buildCategoryStaticContentBlock(categoryMatch[1]);
+  }
+
   const toolMatch = route.match(/^\/tools\/([^/]+)$/);
   if (!toolMatch) return '';
 
