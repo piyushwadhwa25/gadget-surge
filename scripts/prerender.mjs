@@ -254,7 +254,7 @@ function buildCategoryStaticContentBlock(slug) {
   const parts = [];
 
   parts.push(
-    '<div id="seo-content" class="mt-12 space-y-8 text-sm text-muted-foreground max-w-prose mx-auto px-4">',
+    '<div id="seo-content" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">',
   );
 
   parts.push(`<h1>${escapeHtml(category.name)}</h1>`);
@@ -396,7 +396,7 @@ function buildStaticContentBlock(route, map, metaByRoute) {
   const parts = [];
 
   parts.push(
-    '<div id="seo-content" class="mt-12 space-y-8 text-sm text-muted-foreground max-w-prose mx-auto px-4">',
+    '<div id="seo-content" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">',
   );
 
   if (meta) {
