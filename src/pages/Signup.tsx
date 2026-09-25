@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { getSafeRedirectPath } from '@/lib/safeRedirectPath';
 
 const signupSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -28,6 +29,8 @@ type SignupValues = z.infer<typeof signupSchema>;
 export default function Signup() {
   const { user, loading: authLoading, signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = getSafeRedirectPath(searchParams.get('next'));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,14 +40,14 @@ export default function Signup() {
   });
 
   if (!authLoading && user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={nextPath} replace />;
   }
 
   const onSubmit = async (values: SignupValues) => {
     setError(null);
     setSubmitting(true);
 
-    const { error: signUpError } = await signUp(values.email, values.password);
+    const { error: signUpError } = await signUp(values.email, values.password, nextPath);
     setSubmitting(false);
 
     if (signUpError) {
@@ -52,13 +55,13 @@ export default function Signup() {
       return;
     }
 
-    navigate('/dashboard');
+    navigate(nextPath);
   };
 
   const handleGoogle = async () => {
     setError(null);
     setSubmitting(true);
-    const { error: googleError } = await signInWithGoogle();
+    const { error: googleError } = await signInWithGoogle(nextPath);
     if (googleError) {
       setError(googleError.message);
       setSubmitting(false);

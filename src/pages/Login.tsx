@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { getSafeRedirectPath } from '@/lib/safeRedirectPath';
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -28,6 +29,8 @@ type LoginValues = z.infer<typeof loginSchema>;
 export default function Login() {
   const { user, loading: authLoading, signInWithPassword, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = getSafeRedirectPath(searchParams.get('next'));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +40,7 @@ export default function Login() {
   });
 
   if (!authLoading && user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={nextPath} replace />;
   }
 
   const onSubmit = async (values: LoginValues) => {
@@ -52,13 +55,13 @@ export default function Login() {
       return;
     }
 
-    navigate('/dashboard');
+    navigate(nextPath);
   };
 
   const handleGoogle = async () => {
     setError(null);
     setSubmitting(true);
-    const { error: googleError } = await signInWithGoogle();
+    const { error: googleError } = await signInWithGoogle(nextPath);
     if (googleError) {
       setError(googleError.message);
       setSubmitting(false);

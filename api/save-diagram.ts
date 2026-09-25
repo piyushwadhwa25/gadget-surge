@@ -1,8 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_lib/supabaseAdmin.js';
+import { isPremiumUser } from './_lib/isPremiumUser.js';
 import { verifyUser } from './_lib/verifyUser.js';
-
-type Plan = 'free' | 'premium';
 
 const TOOL_SLUG = 'visual-db-builder';
 
@@ -33,28 +32,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Data is required' });
   }
 
-  const { data: subRow, error: subError } = await supabaseAdmin
-    .from('subscriptions')
-    .select('plan, status')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (subError) {
-    console.error('save-diagram: subscriptions query failed', subError);
-    return res.status(500).json({ error: 'Failed to load entitlement' });
-  }
-
-  const plan: Plan = !subRow
-    ? 'free'
-    : subRow.plan === 'premium'
-      ? 'premium'
-      : 'free';
-
-  if (plan !== 'premium') {
-    return res.status(403).json({ error: 'Cloud sync requires a premium plan.' });
-  }
-
   if (!diagramId) {
+    const ownerPremium = await isPremiumUser(user.id);
+    if (!ownerPremium) {
+      return res.status(403).json({ error: 'Cloud sync requires a premium plan.' });
+    }
+
     const { data: inserted, error: insertError } = await supabaseAdmin
       .from('workspace_data')
       .insert({
@@ -110,7 +93,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    // Owner path keeps user_id filter; editor collaborators only match by diagram id.
+    const billingUserId = isOwner ? user.id : existing.user_id;
+    const billingPremium = await isPremiumUser(billingUserId);
+    if (!billingPremium) {
+      const message = isOwner
+        ? 'Cloud sync requires a premium plan.'
+        : 'This diagram’s owner must have Pro for cloud saves.';
+      return res.status(403).json({ error: message });
+    }
+
     let updateQuery = supabaseAdmin
       .from('workspace_data')
       .update({ name, data })
@@ -132,7 +123,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ id: updated.id, updated_at: updated.updated_at });
   }
 
-  // First cloud sync for this local diagram id — insert with the client-provided id.
+  const ownerPremium = await isPremiumUser(user.id);
+  if (!ownerPremium) {
+    return res.status(403).json({ error: 'Cloud sync requires a premium plan.' });
+  }
+
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from('workspace_data')
     .insert({

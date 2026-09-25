@@ -18,6 +18,8 @@ const FREE_FEATURES = [
 const PRO_FEATURES = [
   'Everything in Free',
   'Cloud Sync across devices',
+  'Shared workspaces — invite teammates as viewers or editors',
+  'Collaborators don’t need Pro',
   'Watermark-free image exports',
 ];
 

@@ -48,6 +48,7 @@ const App = () => (
                 }
               />
               <Route path="/app/visual-db-builder" element={<VisualDbBuilder />} />
+              <Route path="/app/visual-db-builder/:diagramId" element={<VisualDbBuilder />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

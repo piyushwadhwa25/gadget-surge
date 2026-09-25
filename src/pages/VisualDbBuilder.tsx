@@ -20,7 +20,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { toJpeg, toPng, toSvg } from 'html-to-image';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Cloud,
   Copy,
@@ -58,6 +58,7 @@ import {
 } from '@/lib/localDiagramStore';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildLoginPath, buildSignupPath } from '@/lib/safeRedirectPath';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,6 +95,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const CLOUD_TOOL_SLUG = 'visual-db-builder';
+const BUILDER_BASE_PATH = '/app/visual-db-builder';
 const EXPORT_IMAGE_WIDTH = 1024;
 const EXPORT_IMAGE_HEIGHT = 768;
 const WATERMARK_TEXT = 'Made with GadgetSurge — gadgetsurge.com';
@@ -117,6 +119,18 @@ type CollaboratorListItem = {
   role: CollaboratorRole;
   email: string | null;
 };
+
+type PendingInviteItem = {
+  email: string;
+  role: CollaboratorRole;
+  created_at: string;
+};
+
+type DeepLinkGate = 'idle' | 'need-login' | 'loading' | 'denied' | 'ready';
+
+function diagramDeepPath(diagramId: string): string {
+  return `${BUILDER_BASE_PATH}/${diagramId}`;
+}
 
 const EXPORT_CHROME_CLASSES = [
   'react-flow__controls',
@@ -220,8 +234,8 @@ async function fetchEntitlement(accessToken: string): Promise<Entitlement> {
   return response.json() as Promise<Entitlement>;
 }
 
-function VisualDbBuilderCanvas() {
-  const { session, user } = useAuth();
+function VisualDbBuilderCanvas({ routeDiagramId }: { routeDiagramId?: string }) {
+  const { session, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { fitView, getNodes } = useReactFlow();
   const flowWrapperRef = useRef<HTMLDivElement>(null);
@@ -263,7 +277,10 @@ function VisualDbBuilderCanvas() {
   const [shareRole, setShareRole] = useState<CollaboratorRole>('viewer');
   const [sharing, setSharing] = useState(false);
   const [collaborators, setCollaborators] = useState<CollaboratorListItem[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingInviteItem[]>([]);
   const [collaboratorsLoading, setCollaboratorsLoading] = useState(false);
+  const [deepLinkGate, setDeepLinkGate] = useState<DeepLinkGate>('idle');
+  const deepLinkHandledRef = useRef<string | null>(null);
   const [aiAgentOpen, setAiAgentOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importSqlText, setImportSqlText] = useState('');
@@ -274,6 +291,31 @@ function VisualDbBuilderCanvas() {
   const canShare = Boolean(
     diagramId && cloudSynced && accessRole === 'owner' && session?.access_token,
   );
+
+  const syncDiagramUrl = useCallback(
+    (id: string | null) => {
+      if (id) {
+        navigate(diagramDeepPath(id), { replace: true });
+      } else if (!routeDiagramId) {
+        navigate(BUILDER_BASE_PATH, { replace: true });
+      }
+    },
+    [navigate, routeDiagramId],
+  );
+
+  const copyDiagramLink = useCallback(async () => {
+    if (!diagramId) {
+      toast.error('Sync this diagram before copying a link');
+      return;
+    }
+    const url = `${window.location.origin}${diagramDeepPath(diagramId)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied');
+    } catch {
+      toast.error('Could not copy link');
+    }
+  }, [diagramId]);
 
   useEffect(() => {
     const nextUserId = user?.id;
@@ -462,6 +504,7 @@ function VisualDbBuilderCanvas() {
       }
 
       const list = body && Array.isArray(body.collaborators) ? body.collaborators : [];
+      const pendingList = body && Array.isArray(body.pending) ? body.pending : [];
       setCollaborators(
         list.map(
           (row: {
@@ -478,6 +521,15 @@ function VisualDbBuilderCanvas() {
               email: typeof row.email === 'string' ? row.email : null,
             };
           },
+        ),
+      );
+      setPendingInvites(
+        pendingList.map(
+          (row: { email?: unknown; role?: unknown; created_at?: unknown }) => ({
+            email: typeof row.email === 'string' ? row.email : '',
+            role: row.role === 'editor' ? 'editor' : 'viewer',
+            created_at: typeof row.created_at === 'string' ? row.created_at : '',
+          }),
         ),
       );
     } catch (err: unknown) {
@@ -873,11 +925,76 @@ function VisualDbBuilderCanvas() {
     });
 
     setMyDiagramsOpen(false);
+    syncDiagramUrl(cloudId);
+    setDeepLinkGate('ready');
     toast.success(
       role === 'viewer' ? `Loaded “${name}” (view only)` : `Loaded “${name}”`,
     );
     void loadDiagrams();
   };
+
+  const openDiagramFromDeepLink = useCallback(
+    async (targetId: string) => {
+      if (!user?.id) {
+        return;
+      }
+
+      setDeepLinkGate('loading');
+      try {
+        const { data: row, error } = await supabase
+          .from('workspace_data')
+          .select('id, name, updated_at, user_id')
+          .eq('id', targetId)
+          .eq('tool_slug', CLOUD_TOOL_SLUG)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!row) {
+          setDeepLinkGate('denied');
+          return;
+        }
+
+        let role: AccessRole = 'viewer';
+        if (String(row.user_id) === user.id) {
+          role = 'owner';
+        } else {
+          const { data: collab, error: collabError } = await supabase
+            .from('diagram_collaborators')
+            .select('role')
+            .eq('diagram_id', targetId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (collabError) {
+            throw collabError;
+          }
+
+          if (!collab) {
+            setDeepLinkGate('denied');
+            return;
+          }
+
+          role = collab.role === 'editor' ? 'editor' : 'viewer';
+        }
+
+        const meta: DiagramListMeta = {
+          id: String(row.id),
+          name: typeof row.name === 'string' ? row.name : 'Untitled diagram',
+          updated_at: typeof row.updated_at === 'string' ? row.updated_at : '',
+          role: role === 'owner' ? undefined : role,
+        };
+
+        await applyLoadedCloudDiagram(meta, role);
+      } catch (err: unknown) {
+        setDeepLinkGate('denied');
+        toast.error(err instanceof Error ? err.message : 'Failed to open shared diagram');
+      }
+    },
+    [user?.id, applyLoadedCloudDiagram],
+  );
 
   const handleLoadDiagram = (item: LocalDiagram) => {
     const loadedNodes = Array.isArray(item.data?.nodes) ? (item.data.nodes as TableFlowNode[]) : [];
@@ -889,6 +1006,11 @@ function VisualDbBuilderCanvas() {
     const linked = Boolean(item.linkedUserId && item.linkedUserId === user?.id);
     setCloudSynced(linked);
     setAccessRole(linked ? 'owner' : null);
+    if (linked) {
+      syncDiagramUrl(item.id);
+    } else {
+      navigate(BUILDER_BASE_PATH, { replace: true });
+    }
     setMyDiagramsOpen(false);
     toast.success(`Loaded “${item.name}”`);
   };
@@ -945,11 +1067,61 @@ function VisualDbBuilderCanvas() {
     }
   };
 
-  const openShareDialog = () => {
-    if (!canShare || !diagramId) {
+  useEffect(() => {
+    deepLinkHandledRef.current = null;
+  }, [routeDiagramId]);
+
+  useEffect(() => {
+    if (!routeDiagramId) {
+      setDeepLinkGate('idle');
+      return;
+    }
+
+    if (authLoading) {
+      return;
+    }
+
+    if (!user) {
+      setDeepLinkGate('need-login');
+      return;
+    }
+
+    if (diagramId === routeDiagramId) {
+      setDeepLinkGate('ready');
+      return;
+    }
+
+    if (deepLinkHandledRef.current === routeDiagramId) {
+      return;
+    }
+
+    deepLinkHandledRef.current = routeDiagramId;
+    void openDiagramFromDeepLink(routeDiagramId);
+  }, [routeDiagramId, authLoading, user, diagramId, openDiagramFromDeepLink]);
+
+  const openShareDialog = async () => {
+    if (!diagramId || !cloudSynced || accessRole !== 'owner') {
       toast.error('Cloud Sync this diagram before sharing');
       return;
     }
+
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      toast.error('Log in to share this diagram');
+      return;
+    }
+
+    try {
+      const entitlement = await fetchEntitlement(accessToken);
+      if (entitlement.plan !== 'premium') {
+        setCloudPrompt('upgrade');
+        return;
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to check plan');
+      return;
+    }
+
     setShareEmail('');
     setShareRole('viewer');
     setShareOpen(true);
@@ -992,12 +1164,16 @@ function VisualDbBuilderCanvas() {
         throw new Error(message);
       }
 
-      const updated = Boolean(body && body.updated);
-      toast.success(
-        updated
-          ? `Updated ${email} to ${shareRole}`
-          : `Invited ${email} as ${shareRole}`,
-      );
+      const status = body && typeof body.status === 'string' ? body.status : 'added';
+      const emailSent = Boolean(body && body.emailSent);
+      let toastMessage =
+        status === 'pending'
+          ? 'Invite sent. They’ll get access after signing up.'
+          : 'Added. We emailed them a link.';
+      if (!emailSent) {
+        toastMessage += ' (email couldn’t be sent — share the link manually)';
+      }
+      toast.success(toastMessage);
       setShareEmail('');
       void loadCollaborators(diagramId);
     } catch (err: unknown) {
@@ -1007,11 +1183,138 @@ function VisualDbBuilderCanvas() {
     }
   };
 
+  const patchCollaboratorRole = async (targetUserId: string, role: CollaboratorRole) => {
+    const accessToken = session?.access_token;
+    if (!accessToken || !diagramId) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/diagram-collaborators', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ diagramId, userId: targetUserId, role }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          (body && typeof body.error === 'string' && body.error) ||
+            `Failed to update role (${response.status})`,
+        );
+      }
+      toast.success('Role updated');
+      void loadCollaborators(diagramId);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update role');
+    }
+  };
+
+  const removeCollaborator = async (targetUserId: string) => {
+    const accessToken = session?.access_token;
+    if (!accessToken || !diagramId) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/diagram-collaborators', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ diagramId, userId: targetUserId }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          (body && typeof body.error === 'string' && body.error) ||
+            `Failed to remove collaborator (${response.status})`,
+        );
+      }
+      toast.success('Collaborator removed');
+      void loadCollaborators(diagramId);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove collaborator');
+    }
+  };
+
+  const cancelPendingInvite = async (email: string) => {
+    const accessToken = session?.access_token;
+    if (!accessToken || !diagramId) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/invite-collaborator', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ diagramId, email: email.trim().toLowerCase() }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          (body && typeof body.error === 'string' && body.error) ||
+            `Failed to cancel invite (${response.status})`,
+        );
+      }
+      toast.success('Invite cancelled');
+      void loadCollaborators(diagramId);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel invite');
+    }
+  };
+
+  const leaveSharedDiagram = async (sharedDiagramId: string) => {
+    const accessToken = session?.access_token;
+    if (!accessToken || !user?.id) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/diagram-collaborators', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ diagramId: sharedDiagramId, userId: user.id }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          (body && typeof body.error === 'string' && body.error) ||
+            `Failed to leave diagram (${response.status})`,
+        );
+      }
+
+      if (diagramId === sharedDiagramId) {
+        setNodes([createTableNode(0)]);
+        setEdges([]);
+        setDiagramId(null);
+        setDiagramName('');
+        setCloudSynced(false);
+        setAccessRole(null);
+        navigate(BUILDER_BASE_PATH, { replace: true });
+      }
+
+      toast.success('Left shared diagram');
+      void loadSharedDiagrams();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to leave diagram');
+    }
+  };
+
   const shareButton = (
     <Button
       type="button"
       variant="outline"
-      onClick={openShareDialog}
+      onClick={() => void openShareDialog()}
       disabled={!canShare}
     >
       <Share2 className="h-4 w-4" />
@@ -1031,6 +1334,38 @@ function VisualDbBuilderCanvas() {
         <meta name="robots" content="noindex,follow" />
         <link rel="canonical" href="https://www.gadgetsurge.com/app/visual-db-builder" />
       </Helmet>
+
+      {routeDiagramId && deepLinkGate === 'need-login' && (
+        <div className="mx-4 mt-4 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
+          <p className="font-medium text-foreground">Log in to open this shared diagram</p>
+          <p className="mt-1 text-muted-foreground">
+            Sign in with the account that received the invite.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" size="sm" asChild>
+              <Link to={buildLoginPath(diagramDeepPath(routeDiagramId))}>Log in</Link>
+            </Button>
+            <Button type="button" variant="outline" size="sm" asChild>
+              <Link to={buildSignupPath(diagramDeepPath(routeDiagramId))}>Sign up</Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {routeDiagramId && deepLinkGate === 'denied' && (
+        <div className="mx-4 mt-4 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
+          <p className="font-medium text-foreground">
+            This diagram doesn&apos;t exist or hasn&apos;t been shared with you
+          </p>
+          <Button type="button" variant="outline" size="sm" className="mt-3" asChild>
+            <Link to={BUILDER_BASE_PATH}>Open Visual DB Builder</Link>
+          </Button>
+        </div>
+      )}
+
+      {routeDiagramId && deepLinkGate === 'loading' && (
+        <p className="mx-4 mt-4 text-sm text-muted-foreground">Opening shared diagram…</p>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-3">
         <div className="flex items-center gap-2">
@@ -1425,8 +1760,8 @@ function VisualDbBuilderCanvas() {
               Share diagram
             </DialogTitle>
             <DialogDescription>
-              Invite a GadgetSurge account by email. Editors can save changes; viewers are
-              read-only.
+              Invite someone by email. Editors can save changes; viewers are read-only.
+              Collaborators do not need Pro.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-1">
@@ -1457,7 +1792,7 @@ function VisualDbBuilderCanvas() {
               </Select>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Current collaborators</p>
+              <p className="text-sm font-medium text-foreground">People with access</p>
               {collaboratorsLoading && (
                 <p className="text-sm text-muted-foreground">Loading…</p>
               )}
@@ -1468,29 +1803,86 @@ function VisualDbBuilderCanvas() {
                 collaborators.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-sm"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-sm"
                   >
                     <span className="min-w-0 truncate text-foreground">
                       {item.email ?? item.user_id}
                     </span>
-                    <span className="shrink-0 text-xs capitalize text-muted-foreground">
-                      {item.role}
-                    </span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Select
+                        value={item.role}
+                        onValueChange={(value: CollaboratorRole) =>
+                          void patchCollaboratorRole(item.user_id, value)
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-[110px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                          <SelectItem value="editor">Editor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-destructive hover:text-destructive"
+                        onClick={() => void removeCollaborator(item.user_id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Pending invites</p>
+              {!collaboratorsLoading && pendingInvites.length === 0 && (
+                <p className="text-sm text-muted-foreground">No pending invites.</p>
+              )}
+              {!collaboratorsLoading &&
+                pendingInvites.map((item) => (
+                  <div
+                    key={item.email}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-foreground">{item.email}</div>
+                      <div className="text-xs capitalize text-muted-foreground">
+                        {item.role} · Pending
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => void cancelPendingInvite(item.email)}
+                    >
+                      Cancel
+                    </Button>
                   </div>
                 ))}
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setShareOpen(false)}>
-              Close
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+            <Button type="button" variant="outline" onClick={() => void copyDiagramLink()}>
+              <Copy className="h-4 w-4" />
+              Copy link
             </Button>
-            <Button
-              type="button"
-              onClick={() => void handleInviteCollaborator()}
-              disabled={sharing}
-            >
-              {sharing ? 'Inviting…' : 'Invite'}
-            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setShareOpen(false)}>
+                Close
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleInviteCollaborator()}
+                disabled={sharing}
+              >
+                {sharing ? 'Inviting…' : 'Invite'}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1665,6 +2057,15 @@ function VisualDbBuilderCanvas() {
                           : '—'}
                       </div>
                     </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => void leaveSharedDiagram(item.id)}
+                    >
+                      Leave
+                    </Button>
                   </div>
                 ))}
             </TabsContent>
@@ -1677,9 +2078,10 @@ function VisualDbBuilderCanvas() {
 }
 
 export default function VisualDbBuilder() {
+  const { diagramId: routeDiagramId } = useParams<{ diagramId?: string }>();
   return (
     <ReactFlowProvider>
-      <VisualDbBuilderCanvas />
+      <VisualDbBuilderCanvas routeDiagramId={routeDiagramId} />
     </ReactFlowProvider>
   );
 }
