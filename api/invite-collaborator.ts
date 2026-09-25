@@ -24,7 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     typeof body.diagramId === 'string' && body.diagramId.trim()
       ? body.diagramId.trim()
       : '';
-  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  let email = typeof body.email === 'string' ? body.email : '';
+  email = email.trim().toLowerCase();
   const role = body.role;
 
   if (!diagramId) {

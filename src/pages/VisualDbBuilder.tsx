@@ -338,10 +338,17 @@ function VisualDbBuilderCanvas() {
         return;
       }
 
+      if (!user?.id) {
+        setCloudListGate('login');
+        setCloudDiagrams([]);
+        return;
+      }
+
       setCloudListGate('ready');
       const { data, error } = await supabase
         .from('workspace_data')
         .select('id, name, updated_at')
+        .eq('user_id', user.id)
         .eq('tool_slug', CLOUD_TOOL_SLUG)
         .order('updated_at', { ascending: false });
 
@@ -362,7 +369,7 @@ function VisualDbBuilderCanvas() {
     } finally {
       setCloudDiagramsLoading(false);
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, user?.id]);
 
   const loadSharedDiagrams = useCallback(async () => {
     setSharedDiagramsLoading(true);
@@ -433,44 +440,45 @@ function VisualDbBuilderCanvas() {
   const loadCollaborators = useCallback(async (targetDiagramId: string) => {
     setCollaboratorsLoading(true);
     try {
-      const { data: rows, error } = await supabase
-        .from('diagram_collaborators')
-        .select('id, user_id, role')
-        .eq('diagram_id', targetDiagramId);
-
-      if (error) {
-        throw error;
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setCollaborators([]);
+        return;
       }
 
-      const userIds = (rows ?? []).map((row) => String(row.user_id));
-      const emailByUserId = new Map<string, string>();
+      const response = await fetch(
+        `/api/diagram-collaborators?diagramId=${encodeURIComponent(targetDiagramId)}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
 
-      if (userIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, email')
-          .in('id', userIds);
-
-        if (!profilesError && profiles) {
-          for (const profile of profiles) {
-            if (typeof profile.id === 'string' && typeof profile.email === 'string') {
-              emailByUserId.set(profile.id, profile.email);
-            }
-          }
-        }
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        const message =
+          (body && typeof body.error === 'string' && body.error) ||
+          `Failed to load collaborators (${response.status})`;
+        throw new Error(message);
       }
 
+      const list = body && Array.isArray(body.collaborators) ? body.collaborators : [];
       setCollaborators(
-        (rows ?? []).map((row) => {
-          const userId = String(row.user_id);
-          const role: CollaboratorRole = row.role === 'editor' ? 'editor' : 'viewer';
-          return {
-            id: String(row.id),
-            user_id: userId,
-            role,
-            email: emailByUserId.get(userId) ?? null,
-          };
-        }),
+        list.map(
+          (row: {
+            id?: unknown;
+            user_id?: unknown;
+            role?: unknown;
+            email?: unknown;
+          }) => {
+            const role: CollaboratorRole = row.role === 'editor' ? 'editor' : 'viewer';
+            return {
+              id: typeof row.id === 'string' ? row.id : String(row.id ?? ''),
+              user_id: typeof row.user_id === 'string' ? row.user_id : String(row.user_id ?? ''),
+              role,
+              email: typeof row.email === 'string' ? row.email : null,
+            };
+          },
+        ),
       );
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to load collaborators');
@@ -478,7 +486,7 @@ function VisualDbBuilderCanvas() {
     } finally {
       setCollaboratorsLoading(false);
     }
-  }, []);
+  }, [session?.access_token]);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<TableFlowNode>[]) => {
@@ -1016,7 +1024,12 @@ function VisualDbBuilderCanvas() {
     <div className="flex h-[calc(100vh-8rem)] min-h-[480px] flex-col">
       <Helmet>
         <title>Visual DB Builder | GadgetSurge</title>
-        <meta name="robots" content="noindex,nofollow" />
+        <meta
+          name="description"
+          content="Free visual database designer. Draw tables, generate SQL and Prisma schemas with AI, import SQL, and export diagrams. No signup needed."
+        />
+        <meta name="robots" content="noindex,follow" />
+        <link rel="canonical" href="https://www.gadgetsurge.com/app/visual-db-builder" />
       </Helmet>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-3">
