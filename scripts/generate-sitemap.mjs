@@ -69,6 +69,11 @@ const routes = [
   { path: '/tools/cron-expression-calculator', priority: '0.8', changefreq: 'weekly' },
   { path: '/tools/color-contrast-checker', priority: '0.8', changefreq: 'weekly' },
   { path: '/tools/data-size-converter', priority: '0.8', changefreq: 'weekly' },
+  { path: '/tools/chmod-calculator', priority: '0.7', changefreq: 'weekly' },
+  { path: '/tools/px-to-rem-converter', priority: '0.7', changefreq: 'weekly' },
+  { path: '/tools/env-to-json-converter', priority: '0.7', changefreq: 'weekly' },
+  { path: '/tools/line-ending-converter', priority: '0.7', changefreq: 'weekly' },
+  { path: '/tools/nanoid-generator', priority: '0.7', changefreq: 'weekly' },
 ];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>

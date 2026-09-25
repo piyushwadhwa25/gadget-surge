@@ -208,6 +208,26 @@ export const toolSeoMetaMap: Record<string, { title: string; description: string
     title: "Data Size Converter — Bytes, KB, MB, GB Online Free | GadgetSurge",
     description: "Convert storage units between binary (KiB, MiB, GiB) and decimal (KB, MB, GB) systems. Free online data size converter.",
   },
+  "chmod-calculator": {
+    title: "chmod Calculator — Octal & Symbolic Permissions | GadgetSurge",
+    description: "Convert chmod 755, rwxr-xr-x, and special bits to octal, symbolic, and shell commands. Free chmod calculator runs in your browser.",
+  },
+  "px-to-rem-converter": {
+    title: "PX to REM Converter — CSS Unit Calculator | GadgetSurge",
+    description: "Convert px to rem at any root font size. Batch-convert CSS and skip 1px borders. Free px to rem tool runs entirely in your browser.",
+  },
+  "env-to-json-converter": {
+    title: "ENV to JSON Converter — Dotenv ↔ JSON | GadgetSurge",
+    description: "Convert .env to JSON or JSON to .env with export stripping and quote rules. Warnings for duplicates. Runs in your browser — secrets stay local.",
+  },
+  "line-ending-converter": {
+    title: "Line Ending Converter — CRLF to LF Online | GadgetSurge",
+    description: "Convert CRLF, LF, or CR line endings. Detect mixed endings and UTF-8 BOM. Download fixed files — processing runs entirely in your browser.",
+  },
+  "nanoid-generator": {
+    title: "NanoID Generator — Short IDs & ULID Online | GadgetSurge",
+    description: "Generate URL-safe NanoIDs and sortable ULIDs with crypto.getRandomValues. Bulk generation up to 100. Runs entirely in your browser.",
+  },
 };
 
 export const toolSeoFallbackMeta = {

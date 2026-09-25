@@ -33,6 +33,11 @@ import { Base64ToImageTool } from '@/pages/tools/Base64ToImageTool';
 import { FaviconGeneratorTool } from '@/pages/tools/FaviconGeneratorTool';
 import { ImageFormatInfoTool } from '@/pages/tools/ImageFormatInfoTool';
 import { ColorContrastCheckerTool } from '@/pages/tools/ColorContrastCheckerTool';
+import { ChmodCalculatorTool } from '@/pages/tools/ChmodCalculatorTool';
+import { PxToRemTool } from '@/pages/tools/PxToRemTool';
+import { EnvJsonConverterTool } from '@/pages/tools/EnvJsonConverterTool';
+import { LineEndingConverterTool } from '@/pages/tools/LineEndingConverterTool';
+import { NanoidGeneratorTool } from '@/pages/tools/NanoidGeneratorTool';
 
 const PdfMergerTool = lazy(() => import('@/pages/tools/PdfMergerTool').then(m => ({ default: m.PdfMergerTool })));
 const PdfPageRemoverTool = lazy(() => import('@/pages/tools/PdfPageRemoverTool').then(m => ({ default: m.PdfPageRemoverTool })));
@@ -86,6 +91,11 @@ const customToolComponents: Record<string, ComponentType<{ tool: any }>> = {
   'pdf-page-remover': PdfPageRemoverTool,
   'pdf-splitter': PdfSplitterTool,
   'color-contrast-checker': ColorContrastCheckerTool,
+  'chmod-calculator': ChmodCalculatorTool,
+  'px-to-rem-converter': PxToRemTool,
+  'env-to-json-converter': EnvJsonConverterTool,
+  'line-ending-converter': LineEndingConverterTool,
+  'nanoid-generator': NanoidGeneratorTool,
 };
 
 export default function ToolPage() {
